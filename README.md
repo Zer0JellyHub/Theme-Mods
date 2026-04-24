@@ -16,12 +16,73 @@ A personal collection of JavaScript mods, UI tweaks and overlays for a self-host
 
 ---
 
-✨ Features Overview
-FeatureTab / ScriptDescription🏠 Home IconHome Icon.jsReplaces default home text with an icon❤️ Favoritennative JellyfinCustom tab styling👁️ WatchlistBookmarks home.jsWatchlist preview overlay🔖 BookmarksBookmarks home.jsBookmarks overlay on home📅 CalendarCalendar.js"Coming Up" glassmorphism overlay — next 7 days⭐ RatingsRating Custom Tab Hud + Overlay.jsFull ratings HUD with Movies / Series ranking, Watchlist, History, Search & Rate👍? 4Useparate scriptPersonalized recommendations overlay🎬 Version SelectorVersion Button Movies/Series.jsSwitch between multiple file versions (4K, 1080p, Dub, Sub…)🔍 Search FixK3nats Search Fix.jsCustom search overlay, hides episodes from results🎞️ Media BarFix Mediabar.js + Media bar extention.jsFeatured content slideshow bar fix🔄 Refresh ButtonRefresh button Laptop app.jsAdds refresh to desktop app header🎭 PF FixPF Fix.jsProfile picture / user fix✏️ Fix Double NameFix Double Name.jsRemoves duplicate title display⚙️ Kefin TweaksKefin.js + KefinTweaks-Config.jsVarious Jellyfin UI tweaks
+# 🎯 TheHub — Jellyfin Custom HUD
 
-📸 Screenshots
-Home Screen
-All custom tabs visible in the top navigation bar:
+> A full custom UI enhancement suite for Jellyfin — built for the **Ultrachromic / Kaleidochromic** theme.
+
+![Preview](https://raw.githubusercontent.com/Zer0JellyHub/TheHub/main/preview.png)
+
+---
+
+## ✨ Features Overview
+
+| Feature | Tab / Script | Description |
+|---|---|---|
+| 🏠 Home Icon | `Home Icon.js` | Replaces default home text with an icon |
+| ❤️ Favoriten | native Jellyfin | Custom tab styling |
+| 👁️ Watchlist | `Bookmarks home.js` | Watchlist preview overlay |
+| 🔖 Bookmarks | `Bookmarks home.js` | Bookmarks overlay on home |
+| 📅 Calendar | `Calendar.js` | "Coming Up" glassmorphism overlay — next 7 days |
+| ⭐ Ratings | `Rating Custom Tab Hud + Overlay.js` | Full ratings HUD with Movies / Series ranking, Watchlist, History, Search & Rate |
+| 👍? 4U | separate script | Personalized recommendations overlay |
+| 🎬 Version Selector | `Version Button Movies/Series.js` | Switch between multiple file versions (4K, 1080p, Dub, Sub…) |
+| 🔍 Search Fix | `K3nats Search Fix.js` | Custom search overlay, hides episodes from results |
+| 🎞️ Media Bar | `Fix Mediabar.js` + `Media bar extention.js` | Featured content slideshow bar fix |
+| 🔄 Refresh Button | `Refresh button Laptop app.js` | Adds refresh to desktop app header |
+| 🎭 PF Fix | `PF Fix.js` | Profile picture / user fix |
+| ✏️ Fix Double Name | `Fix Double Name.js` | Removes duplicate title display |
+| ⚙️ Kefin Tweaks | `Kefin.js` + `KefinTweaks-Config.js` | Various Jellyfin UI tweaks |
+
+---
+
+### Calendar Overlay
+Click **Calendar** → glassmorphism full-screen overlay with upcoming episodes sorted by day.
+
+### Ratings Overlay
+Click **Ratings** → full overlay with:
+- 🎬 Ranked Movies
+- 📺 Ranked Series
+- 📋 Watchlist per user
+- 📜 Watch History (filter: All / Movies / Series)
+- 🔍 Search & Rate
+
+---
+
+## 📁 File Overview
+
+| File / Folder | Description |
+|---|---|
+| `Calendar.js` | Coming Up overlay — shows upcoming episodes for the next 7 days |
+| `Rating Custom Tab Hud + Overlay.js` | Full ratings system with user rankings, history, watchlist |
+| `Bookmarks home.js` | Watchlist & Bookmarks overlays |
+| `Home Icon.js` | Replaces home tab text with SVG icon |
+| `K3nats Search Fix.js` | Custom search overlay, filters episodes from results |
+| `Fix Mediabar.js` | Fixes the JellyFrame Media Bar mod |
+| `Media bar extention.js` | Extends media bar functionality |
+| `Version Button Movies/` | Version selector for movies (4K/1080p/etc.) |
+| `Version Button Series.js` | Version selector for series episodes (Ger Dub/Eng Sub/etc.) |
+| `Fix Double Name.js` | Removes duplicate title shown on detail pages |
+| `Refresh button Laptop app.js` | Adds a reload button in the desktop app header |
+| `PF Fix.js` | Fixes profile picture display |
+| `Kefin.js` | Core UI tweaks |
+| `KefinTweaks-Config.js` | Config file for Kefin tweaks |
+| `Raiting k3ntas fix.js` | Rating display fix |
+| `Remove Setting Button.js` | Hides the settings gear on media cards |
+| `Remove default Search button.js` | Hides native Jellyfin search button |
+| `Reshow Cast Button.js` | Restores cast/sync button in header |
+| `Branding/` | Custom branding assets |
+| `Startsite better/` | Home page improvements |
+
 
 ---
 
