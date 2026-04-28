@@ -106,45 +106,27 @@
   const closeCalendar = () => {
     document.removeEventListener('keydown', escHandler);
     const o = document.getElementById('jf-overlay'); if (o) o.remove();
-    document.querySelectorAll('[id^="customTabButton"]').forEach(b => {
-      if (b.textContent.trim().toLowerCase().includes('calend'))
-        b.classList.remove('emby-tab-button-active');
-    });
   };
 
-  const jfFetch = async (server, path, params, token) => {
-    if (typeof ApiClient !== 'undefined' && typeof ApiClient.getJSON === 'function') {
-      try {
-        const data = await ApiClient.getJSON(ApiClient.getUrl(path, params));
-        if (data && Array.isArray(data.Items)) return data;
-      } catch (e) {
-        console.warn('[JF-Cal] ApiClient.getJSON failed, falling back to fetch()', e);
-      }
-    }
-    const url = `${server}/${path}?${new URLSearchParams(params)}`;
+  const jfFetch = async (url, token) => {
     const resp = await fetch(url, {
       headers: {
         'Authorization': `MediaBrowser Token="${token}"`,
         'X-Emby-Authorization': `MediaBrowser Token="${token}"`
       }
     });
-    if (!resp.ok) {
-      const text = await resp.text().catch(() => '');
-      throw new Error(`HTTP ${resp.status} – ${text.substring(0, 300)}`);
-    }
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     return resp.json();
   };
 
-  /* Format season/episode label — e.g. S2 E12 */
   const fmtEpLabel = item => {
-    const s = item.ParentIndexNumber;   // season number
-    const e = item.IndexNumber;         // episode number
+    const s = item.ParentIndexNumber;
+    const e = item.IndexNumber;
     if (s != null && e != null) return `S${s} E${e}`;
     if (e != null) return `E${e}`;
     return '';
   };
 
-  /* Deduplicate: per series keep only the FIRST (earliest) episode per day */
   const dedup = items => {
     const seen = new Set();
     return items.filter(item => {
@@ -158,14 +140,13 @@
   const buildCards = (items, server, token) => {
     if (!items.length) return `<div class="jf-no-ep">No episodes scheduled.</div>`;
     return dedup(items).map(item => {
-      const sid   = item.SeriesId || item.Id;
-      const tag   = item.SeriesPrimaryImageTag || (item.ImageTags && item.ImageTags.Primary) || '';
-      const img   = sid
+      const sid = item.SeriesId || item.Id;
+      const tag = item.SeriesPrimaryImageTag || (item.ImageTags && item.ImageTags.Primary) || '';
+      const img = sid
         ? `${server}/Items/${sid}/Images/Primary?maxHeight=300&quality=85${tag ? '&tag='+tag : ''}&api_key=${token}`
         : '';
       const title = item.SeriesName || item.Name || '';
       const epLbl = fmtEpLabel(item);
-
       return `<div class="jf-card" onclick="document.getElementById('jf-overlay').remove();window.location.hash='/details?id=${sid}'">
         <div class="jf-card-img">${img ? `<img src="${img}" alt="" onerror="this.style.display='none'">` : ''}</div>
         <div class="jf-card-t">${title}</div>
@@ -200,9 +181,9 @@
   const openCalendar = async () => {
     injectCSS();
 
-    const days = [];
     const today = new Date(); today.setHours(0,0,0,0);
     const yesterday = new Date(today); yesterday.setDate(today.getDate()-1);
+    const days = [];
     for (let i = -1; i < 8; i++) {
       const d = new Date(today); d.setDate(today.getDate()+i); days.push(d);
     }
@@ -241,19 +222,32 @@
       const server = ApiClient.serverAddress().replace(/\/$/, '');
       const token  = ApiClient.accessToken();
 
-      const data = await jfFetch(server, 'Shows/Upcoming', {
-        UserId: userId,
-        Limit: 500,
-        Fields: 'PremiereDate,SeriesInfo,PrimaryImageAspectRatio,SeriesPrimaryImageTag',
-        ImageTypeLimit: 1,
-        EnableImageTypes: 'Primary',
-      }, token);
-
-      const body = document.getElementById('jf-overlay-body');
-      if (!body) return;
-
       const groups = {};
-      (data.Items || []).forEach(i => {
+
+      /* ── Fetch 1: Shows/Upcoming für heute + Zukunft ── */
+      const upcomingData = await jfFetch(
+        `${server}/Shows/Upcoming?UserId=${userId}&Limit=500`+
+        `&Fields=PremiereDate,SeriesInfo,PrimaryImageAspectRatio,SeriesPrimaryImageTag`+
+        `&ImageTypeLimit=1&EnableImageTypes=Primary`,
+        token
+      );
+
+      /* ── Fetch 2: Gestern — eigene Abfrage mit Datumsfilter ── */
+      const yStart = yesterday.toISOString();
+      const yEnd   = new Date(yesterday.getTime() + 86399999).toISOString();
+      const yesterdayData = await jfFetch(
+        `${server}/Users/${userId}/Items?IncludeItemTypes=Episode&Recursive=true&Limit=200`+
+        `&Fields=PremiereDate,SeriesInfo,PrimaryImageAspectRatio,SeriesPrimaryImageTag,ParentIndexNumber,IndexNumber`+
+        `&ImageTypeLimit=1&EnableImageTypes=Primary`+
+        `&MinPremiereDate=${yStart}&MaxPremiereDate=${yEnd}`+
+        `&SortBy=PremiereDate&SortOrder=Ascending`,
+        token
+      ).catch(() => ({ Items: [] }));
+
+      /* Beide zusammenführen */
+      const allItems = [...(yesterdayData.Items || []), ...(upcomingData.Items || [])];
+
+      allItems.forEach(i => {
         const raw = i.PremiereDate || i.StartDate || '';
         if (!raw) return;
         const d = new Date(raw); if (isNaN(d.getTime())) return;
@@ -263,6 +257,9 @@
         if (!groups[k]) groups[k] = [];
         groups[k].push(i);
       });
+
+      const body = document.getElementById('jf-overlay-body');
+      if (!body) return;
 
       days.forEach(d => {
         const k = toKey(d);
@@ -314,8 +311,7 @@
       console.error('[JF-Cal]', e);
       const body = document.getElementById('jf-overlay-body');
       if (body) body.innerHTML = `<div class="jf-error">
-        <strong>Failed to load schedule.</strong><br>${e.message}<br><br>
-        <small>Open the browser console (F12 → Console) and look for [JF-Cal] for details.</small>
+        <strong>Failed to load schedule.</strong><br>${e.message}
       </div>`;
     }
   };
