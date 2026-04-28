@@ -1439,186 +1439,176 @@ function buildJFY() {
 }
 
 
+
 // ─── DICE ───
 const heroItems = [
-  {rating:'8.3',title:'MASHLE: MAGIC AND MUSCLES',meta:'2023 · Animation · Komödie · Action & Adventure',desc:'In einer Welt, in der ein jeder über magische Fähigkeiten verfügt, lebt in den Tiefen eines Waldes der junge Mann Mash Burnedead. Er kann keinen Funken Magie…',bg:'linear-gradient(135deg,#0a0020 0%,#1a0040 40%,#000820 100%)'},
-  {rating:'8.8',title:'Frieren – Nach dem Ende der Reise',meta:'2023 · Animation · Action & Adventure · Drama',desc:'Nach einer zehnjährigen Odyssee gelingt es der Elfenmagierin Frieren zusammen mit Himmels Heldengruppe, den Dämonenkönig zu stürzen…',bg:'linear-gradient(135deg,#001820 0%,#003850 40%,#001020 100%)'},
-  {rating:'8.3',title:'Date a Live',meta:'2013 · Animation · Sci-Fi & Fantasy · Komödie',desc:'In Date a Live geht es um den Jungen Shido Itsuka, der einem weiblichen Geist begegnet, welcher von einer verwüsteten Welt ausgeschlossen wurde…',bg:'linear-gradient(135deg,#100030 0%,#2a0060 40%,#080018 100%)'},
-  {rating:'8.0',title:'My Friend's Little Sister Has It In for Me!',meta:'2025 · Animation · Komödie',desc:'Für Oberschüler Akiteru Oboshi sind Jugenderfahrungen wie Spaß, Freundschaften und sogar eine Freundin, die reinste Zeitverschwendung…',bg:'linear-gradient(135deg,#200010 0%,#500028 40%,#180008 100%)'},
-  {rating:'10.0',title:'Zenonzard – The Animation',meta:'2019 · Animation · Action & Adventure · Sci-Fi & Fantasy',desc:'Das Jahr 20XX. Menschen, die "Concodes" genannt werden, und Ultrahochleistungs-KI, die "Codeman" genannt wird, treten als Freunde im Kartenspiel ZENONZARD auf…',bg:'linear-gradient(135deg,#001a30 0%,#003a70 40%,#001020 100%)'},
-  {rating:'7.7',title:'Grand Blue Dreaming',meta:'2018 · Animation · Komödie',desc:'Als Iori Kitahara auf die Uni geht, kommt er in Izu, im Tauchshop seines Onkels, dem Grand Blue unter. Er freut sich schon auf ein Studentenleben an der tosenden…',bg:'linear-gradient(135deg,#001030 0%,#003060 40%,#000818 100%)'},
+  {rating:"8.3", title:"MASHLE: MAGIC AND MUSCLES", meta:"2023 · Animation · Komödie · Action & Adventure", desc:"In einer Welt, in der ein jeder über magische Fähigkeiten verfügt, lebt in den Tiefen eines Waldes der junge Mann Mash Burnedead…", bg:"linear-gradient(135deg,#0a0020 0%,#1a0040 40%,#000820 100%)"},
+  {rating:"8.8", title:"Frieren – Nach dem Ende der Reise", meta:"2023 · Animation · Action & Adventure · Drama", desc:"Nach einer zehnjährigen Odyssee gelingt es der Elfenmagierin Frieren zusammen mit Himmels Heldengruppe, den Dämonenkönig zu stürzen…", bg:"linear-gradient(135deg,#001820 0%,#003850 40%,#001020 100%)"},
+  {rating:"8.3", title:"Date a Live", meta:"2013 · Animation · Sci-Fi & Fantasy · Komödie", desc:"In Date a Live geht es um den Jungen Shido Itsuka, der einem weiblichen Geist begegnet, welcher von einer verwüsteten Welt ausgeschlossen wurde…", bg:"linear-gradient(135deg,#100030 0%,#2a0060 40%,#080018 100%)"},
+  {rating:"8.0", title:"My Friend's Little Sister Has It In for Me!", meta:"2025 · Animation · Komödie", desc:"Für Oberschüler Akiteru Oboshi sind Jugenderfahrungen wie Spaß, Freundschaften und sogar eine Freundin, die reinste Zeitverschwendung…", bg:"linear-gradient(135deg,#200010 0%,#500028 40%,#180008 100%)"},
+  {rating:"10.0", title:"Zenonzard – The Animation", meta:"2019 · Animation · Action & Adventure · Sci-Fi & Fantasy", desc:'Das Jahr 20XX. Menschen, die "Concodes" genannt werden, und KI, die "Codeman" genannt wird, treten als Freunde im Kartenspiel ZENONZARD auf…', bg:"linear-gradient(135deg,#001a30 0%,#003a70 40%,#001020 100%)"},
+  {rating:"7.7", title:"Grand Blue Dreaming", meta:"2018 · Animation · Komödie", desc:"Als Iori Kitahara auf die Uni geht, kommt er in Izu, im Tauchshop seines Onkels, dem Grand Blue unter…", bg:"linear-gradient(135deg,#001030 0%,#003060 40%,#000818 100%)"}
 ];
-let heroIndex = 0;
+let heroIdx = 0;
 function diceClick() {
-  heroIndex = (heroIndex + 1) % heroItems.length;
-  const item = heroItems[heroIndex];
-  const banner = document.querySelector('.hero-banner');
-  const bg = banner.querySelector('.hero-bg');
-  bg.style.background = item.bg;
-  banner.querySelector('.hero-rating').textContent = '★ ' + item.rating;
-  banner.querySelector('.hero-title-main').textContent = item.title;
-  banner.querySelector('.hero-meta').textContent = item.meta;
-  banner.querySelector('.hero-desc').textContent = item.desc;
-  // flash animation
-  const btn = document.getElementById('dice-btn');
-  btn.style.transform = 'rotate(180deg) scale(1.2)';
-  setTimeout(() => btn.style.transform = '', 300);
-  btn.style.transition = 'transform 0.3s';
+  heroIdx = (heroIdx + 1) % heroItems.length;
+  const item = heroItems[heroIdx];
+  const banner = document.querySelector(".hero-banner");
+  banner.querySelector(".hero-bg").style.background = item.bg;
+  banner.querySelector(".hero-rating").textContent = "★ " + item.rating;
+  banner.querySelector(".hero-title-main").textContent = item.title;
+  banner.querySelector(".hero-meta").textContent = item.meta;
+  banner.querySelector(".hero-desc").textContent = item.desc;
+  const btn = document.getElementById("dice-btn");
+  btn.style.transition = "transform 0.3s";
+  btn.style.transform = "rotate(180deg) scale(1.2)";
+  setTimeout(() => { btn.style.transform = ""; }, 300);
 }
 
 // ─── TRIANGLE DROPDOWN ───
 function toggleTriDrop(e) {
   e.stopPropagation();
-  const drop = document.getElementById('tri-drop');
-  drop.classList.toggle('open');
+  document.getElementById("tri-drop").classList.toggle("open");
 }
-document.addEventListener('click', () => {
-  document.getElementById('tri-drop').classList.remove('open');
+document.addEventListener("click", function() {
+  const d = document.getElementById("tri-drop");
+  if (d) d.classList.remove("open");
 });
 
-// ─── SEARCH MODAL ───
-const fakeSearchData = [
-  {n:'A Killer Romance',y:'2024',type:'movies',cls:'p-romance'},
-  {n:'A Million Ways to Die in the West',y:'2014',type:'movies',cls:'p-comedy'},
-  {n:'A Working Man',y:'2025',type:'movies',cls:'p-action'},
-  {n:'Akira',y:'1988',type:'movies',cls:'p-scifi'},
-  {n:'A Bridge to the Starry Skies',y:'2011',type:'series',cls:'p-romance'},
-  {n:'A Certain Magical Index',y:'2008',type:'series',cls:'p-scifi'},
-  {n:'A Certain Scientific Railgun',y:'2009',type:'series',cls:'p-scifi'},
-  {n:'A Certain Scientific Accelerator',y:'2019',type:'series',cls:'p-action'},
-  {n:'A Condition Called Love',y:'2024',type:'series',cls:'p-romance'},
-  {n:'A Couple of Cuckoos',y:'2022',type:'series',cls:'p-comedy'},
-  {n:'A Dark Rabbit has Seven Lives',y:'2011',type:'series',cls:'p-dark-fantasy'},
-  {n:'A Destructive God Sits Next to Me',y:'2020',type:'series',cls:'p-comedy'},
-  {n:'A Galaxy Next Door',y:'2023',type:'series',cls:'p-romance'},
-  {n:'A Gatherer's Adventure',y:'2025',type:'series',cls:'p-adventure'},
-  {n:'A Gentle Noble's Vacation Recommendation',y:'2026',type:'series',cls:'p-fantasy'},
-  {n:'A Girl & Her Guard Dog',y:'2023',type:'series',cls:'p-romance'},
-  {n:'A Hundred Scenes of Awajima',y:'2026',type:'series',cls:'p-mystery'},
-  {n:'A Journey Through Another World',y:'2024',type:'series',cls:'p-adventure'},
-  {n:'A Mangaka's Weird Daily Life',y:'2025',type:'series',cls:'p-comedy'},
-  {n:'A Misanthrope Teaches a Class for Demi-Humans',y:'2026',type:'series',cls:'p-comedy'},
-  {n:'A Ninja and an Assassin Under One Roof',y:'2025',type:'series',cls:'p-action'},
-  {n:'A Nobody's Way Up to an Exploration Hero',y:'2024',type:'series',cls:'p-adventure'},
-  {n:'A Playthrough of a Certain Dude's VRMMO Life',y:'2023',type:'series',cls:'p-adventure'},
-  {n:'A Returner's Magic Should Be Special',y:'2025',type:'series',cls:'p-dark-fantasy'},
-  {n:'A Salad Bowl of Eccentrics',y:'2024',type:'series',cls:'p-comedy'},
-  {n:'A Sign of Affection',y:'2024',type:'series',cls:'p-romance'},
-  {n:'A Sister's All You Need',y:'2017',type:'series',cls:'p-comedy'},
-  {n:'A Star Brighter Than the Sun',y:'2025',type:'series',cls:'p-romance'},
-  {n:'A Herbivorous Dragon of the Demon Lord's Army',y:'2022',type:'series',cls:'p-comedy'},
-  {n:'A Terrified Teacher at Ghoul School',y:'2024',type:'series',cls:'p-horror'},
-  {n:'Absolute Duo',y:'2015',type:'series',cls:'p-action'},
-  {n:'Assassination Classroom',y:'2015',type:'series',cls:'p-comedy'},
-  {n:'Attack on Titan',y:'2013',type:'series',cls:'p-action'},
-  {n:'Blue Lock',y:'2022',type:'series',cls:'p-action'},
-  {n:'BOCCHI THE ROCK!',y:'2022',type:'series',cls:'p-comedy'},
-  {n:'Chainsaw Man',y:'2022',type:'series',cls:'p-action'},
-  {n:'Classroom of the Elite',y:'2017',type:'series',cls:'p-mystery'},
-  {n:'Date a Live',y:'2013',type:'series',cls:'p-scifi'},
-  {n:'Demon Slayer',y:'2019',type:'series',cls:'p-action'},
-  {n:'Dragon Quest: Dais Abenteuer',y:'2020',type:'series',cls:'p-adventure'},
-  {n:'Family Guy',y:'1999',type:'series',cls:'p-comedy'},
-  {n:'Frieren: Beyond Journey's End',y:'2023',type:'series',cls:'p-dark-fantasy'},
-  {n:'Gabriel DropOut',y:'2017',type:'series',cls:'p-comedy'},
-  {n:'Grand Blue Dreaming',y:'2018',type:'series',cls:'p-comedy'},
-  {n:'Jujutsu Kaisen',y:'2020',type:'series',cls:'p-action'},
-  {n:'MASHLE: MAGIC AND MUSCLES',y:'2023',type:'series',cls:'p-comedy'},
-  {n:'My Dress-Up Darling',y:'2022',type:'series',cls:'p-romance'},
-  {n:'My Hero Academia',y:'2016',type:'series',cls:'p-action'},
-  {n:'Naruto Classic',y:'2002',type:'series',cls:'p-adventure'},
-  {n:'One Piece',y:'1999',type:'series',cls:'p-adventure'},
-  {n:'One Punch Man',y:'2015',type:'series',cls:'p-action'},
-  {n:'Overlord',y:'2015',type:'series',cls:'p-dark-fantasy'},
-  {n:'Solo Leveling',y:'2024',type:'series',cls:'p-action'},
-  {n:'Spy x Family',y:'2022',type:'series',cls:'p-comedy'},
-  {n:'Zenonzard – The Animation',y:'2019',type:'series',cls:'p-scifi'},
+// ─── SEARCH ───
+const searchDB = [
+  {n:"A Killer Romance",         y:"2024", t:"movies", c:"p-romance"},
+  {n:"A Million Ways to Die in the West", y:"2014", t:"movies", c:"p-comedy"},
+  {n:"A Working Man",            y:"2025", t:"movies", c:"p-action"},
+  {n:"Akira",                    y:"1988", t:"movies", c:"p-scifi"},
+  {n:"A Bridge to the Starry Skies", y:"2011", t:"series", c:"p-romance"},
+  {n:"A Certain Magical Index",  y:"2008", t:"series", c:"p-scifi"},
+  {n:"A Certain Scientific Railgun", y:"2009", t:"series", c:"p-scifi"},
+  {n:"A Certain Scientific Accelerator", y:"2019", t:"series", c:"p-action"},
+  {n:"A Condition Called Love",  y:"2024", t:"series", c:"p-romance"},
+  {n:"A Couple of Cuckoos",      y:"2022", t:"series", c:"p-comedy"},
+  {n:"A Dark Rabbit has Seven Lives", y:"2011", t:"series", c:"p-dark-fantasy"},
+  {n:"A Destructive God Sits Next to Me", y:"2020", t:"series", c:"p-comedy"},
+  {n:"A Galaxy Next Door",       y:"2023", t:"series", c:"p-romance"},
+  {n:"A Gatherer's Adventure",   y:"2025", t:"series", c:"p-adventure"},
+  {n:"A Gentle Noble's Vacation Recommendation", y:"2026", t:"series", c:"p-dark-fantasy"},
+  {n:"A Girl & Her Guard Dog",   y:"2023", t:"series", c:"p-romance"},
+  {n:"A Hundred Scenes of Awajima", y:"2026", t:"series", c:"p-mystery"},
+  {n:"A Journey Through Another World", y:"2024", t:"series", c:"p-adventure"},
+  {n:"A Mangaka's Weird Daily Life", y:"2025", t:"series", c:"p-comedy"},
+  {n:"A Misanthrope Teaches a Class for Demi-Humans", y:"2026", t:"series", c:"p-comedy"},
+  {n:"A Ninja and an Assassin Under One Roof", y:"2025", t:"series", c:"p-action"},
+  {n:"A Nobody's Way Up to an Exploration Hero", y:"2024", t:"series", c:"p-adventure"},
+  {n:"A Playthrough of a Certain Dude's VRMMO Life", y:"2023", t:"series", c:"p-adventure"},
+  {n:"A Returner's Magic Should Be Special", y:"2025", t:"series", c:"p-dark-fantasy"},
+  {n:"A Salad Bowl of Eccentrics", y:"2024", t:"series", c:"p-comedy"},
+  {n:"A Sign of Affection",      y:"2024", t:"series", c:"p-romance"},
+  {n:"A Sister's All You Need",  y:"2017", t:"series", c:"p-comedy"},
+  {n:"A Star Brighter Than the Sun", y:"2025", t:"series", c:"p-romance"},
+  {n:"A Herbivorous Dragon of the Demon Lord's Army", y:"2022", t:"series", c:"p-comedy"},
+  {n:"A Terrified Teacher at Ghoul School", y:"2024", t:"series", c:"p-horror"},
+  {n:"Absolute Duo",             y:"2015", t:"series", c:"p-action"},
+  {n:"Assassination Classroom",  y:"2015", t:"series", c:"p-comedy"},
+  {n:"Attack on Titan",          y:"2013", t:"series", c:"p-action"},
+  {n:"Blue Lock",                y:"2022", t:"series", c:"p-action"},
+  {n:"BOCCHI THE ROCK!",         y:"2022", t:"series", c:"p-comedy"},
+  {n:"Chainsaw Man",             y:"2022", t:"series", c:"p-action"},
+  {n:"Classroom of the Elite",   y:"2017", t:"series", c:"p-mystery"},
+  {n:"Date a Live",              y:"2013", t:"series", c:"p-scifi"},
+  {n:"Demon Slayer",             y:"2019", t:"series", c:"p-action"},
+  {n:"Dragon Quest: Dais Abenteuer", y:"2020", t:"series", c:"p-adventure"},
+  {n:"Family Guy",               y:"1999", t:"series", c:"p-comedy"},
+  {n:"Frieren: Beyond Journey's End", y:"2023", t:"series", c:"p-dark-fantasy"},
+  {n:"Gabriel DropOut",          y:"2017", t:"series", c:"p-comedy"},
+  {n:"Grand Blue Dreaming",      y:"2018", t:"series", c:"p-comedy"},
+  {n:"Jujutsu Kaisen",           y:"2020", t:"series", c:"p-action"},
+  {n:"MASHLE: MAGIC AND MUSCLES", y:"2023", t:"series", c:"p-comedy"},
+  {n:"My Dress-Up Darling",      y:"2022", t:"series", c:"p-romance"},
+  {n:"My Friend's Little Sister Has It In for Me!", y:"2025", t:"series", c:"p-romance"},
+  {n:"My Hero Academia",         y:"2016", t:"series", c:"p-action"},
+  {n:"Naruto Classic",           y:"2002", t:"series", c:"p-adventure"},
+  {n:"One Piece",                y:"1999", t:"series", c:"p-adventure"},
+  {n:"One Punch Man",            y:"2015", t:"series", c:"p-action"},
+  {n:"Overlord",                 y:"2015", t:"series", c:"p-dark-fantasy"},
+  {n:"Solo Leveling",            y:"2024", t:"series", c:"p-action"},
+  {n:"Spy x Family",             y:"2022", t:"series", c:"p-comedy"},
+  {n:"Zenonzard – The Animation", y:"2019", t:"series", c:"p-scifi"}
 ];
-
-let currentQuery = '';
-let currentResults = [];
+let srQuery = "", srResults = [];
 
 function openSearch() {
-  document.getElementById('search-backdrop').classList.add('open');
-  document.getElementById('search-modal').classList.add('open');
-  setTimeout(() => document.getElementById('search-modal-input').focus(), 50);
+  document.getElementById("search-backdrop").classList.add("open");
+  document.getElementById("search-modal").classList.add("open");
+  setTimeout(function() { document.getElementById("search-modal-input").focus(); }, 50);
 }
 function closeSearch() {
-  document.getElementById('search-backdrop').classList.remove('open');
-  document.getElementById('search-modal').classList.remove('open');
-  document.getElementById('search-modal-input').value = '';
-  document.getElementById('search-modal-body').innerHTML = '<div class="search-placeholder">Suchbegriff eingeben...</div>';
-  document.getElementById('search-show-all').style.display = 'none';
+  document.getElementById("search-backdrop").classList.remove("open");
+  document.getElementById("search-modal").classList.remove("open");
+  document.getElementById("search-modal-input").value = "";
+  document.getElementById("search-modal-body").innerHTML = '<div class="search-placeholder">Suchbegriff eingeben...</div>';
+  document.getElementById("search-show-all").style.display = "none";
 }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeSearch(); closeAllResults(); } });
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") { closeSearch(); closeAllResults(); }
+});
 
 function onSearchInput(val) {
-  currentQuery = val.trim().toLowerCase();
-  const body = document.getElementById('search-modal-body');
-  const showAll = document.getElementById('search-show-all');
-  if (!currentQuery) {
+  srQuery = val.trim().toLowerCase();
+  const body = document.getElementById("search-modal-body");
+  const showAll = document.getElementById("search-show-all");
+  if (!srQuery) {
     body.innerHTML = '<div class="search-placeholder">Suchbegriff eingeben...</div>';
-    showAll.style.display = 'none';
+    showAll.style.display = "none";
     return;
   }
-  currentResults = fakeSearchData.filter(d => d.n.toLowerCase().includes(currentQuery));
-  const total = currentResults.length;
+  srResults = searchDB.filter(function(d) { return d.n.toLowerCase().indexOf(srQuery) !== -1; });
+  const total = srResults.length;
   if (!total) {
-    body.innerHTML = '<div class="search-placeholder">Keine Ergebnisse für „' + val + '"</div>';
-    showAll.style.display = 'none';
+    body.innerHTML = '<div class="search-placeholder">Keine Ergebnisse für &bdquo;' + val + '&ldquo;</div>';
+    showAll.style.display = "none";
     return;
   }
-  const movies = currentResults.filter(d => d.type === 'movies').slice(0, 3);
-  const series = currentResults.filter(d => d.type === 'series').slice(0, 12);
-  let html = '<div class="search-result-count">' + total + ' ERGEBNISSE FÜR „' + val.toUpperCase() + '"</div>';
+  const movies = srResults.filter(function(d){ return d.t === "movies"; }).slice(0,3);
+  const series = srResults.filter(function(d){ return d.t === "series"; }).slice(0,12);
+  let out = '<div class="search-result-count">' + total + ' ERGEBNISSE FÜR &bdquo;' + val.toUpperCase() + '&ldquo;</div>';
   if (movies.length) {
-    html += '<div class="search-section-label">MOVIES</div>';
-    html += '<div class="search-results-row movies">' + movies.map(d => cardHtml(d)).join('') + '</div>';
+    out += '<div class="search-section-label">MOVIES</div>';
+    out += '<div class="search-results-row movies">' + movies.map(srCard).join("") + "</div>";
   }
   if (series.length) {
-    html += '<div class="search-section-label">SERIES</div>';
-    html += '<div class="search-results-row">' + series.map(d => cardHtml(d)).join('') + '</div>';
+    out += '<div class="search-section-label">SERIES</div>';
+    out += '<div class="search-results-row">' + series.map(srCard).join("") + "</div>";
   }
-  body.innerHTML = html;
-  document.getElementById('search-show-all-btn').textContent = 'Show all ' + total + ' results';
-  showAll.style.display = total > 0 ? 'block' : 'none';
+  body.innerHTML = out;
+  document.getElementById("search-show-all-btn").textContent = "Show all " + total + " results";
+  showAll.style.display = "block";
 }
-
-function cardHtml(d) {
-  return '<div class="search-result-card"><div class="src-poster ' + d.cls + '"></div><div class="src-name">' + d.n + '</div><div class="src-year">' + d.y + '</div></div>';
+function srCard(d) {
+  return '<div class="search-result-card"><div class="src-poster ' + d.c + '"></div><div class="src-name">' + d.n + '</div><div class="src-year">' + d.y + '</div></div>';
 }
-
 function showAllResults() {
+  const q = document.getElementById("search-modal-input").value || srQuery;
   closeSearch();
-  const page = document.getElementById('all-results-page');
-  const q = document.getElementById('search-modal-input').value || currentQuery;
-  document.getElementById('all-results-title').textContent = 'All results for "' + q + '"';
-  document.getElementById('all-results-count').textContent = currentResults.length + ' / ' + currentResults.length + ' LOADED';
-  renderAllResults('all');
-  page.style.display = 'block';
-  page.scrollTo(0, 0);
+  document.getElementById("all-results-title").textContent = 'All results for "' + q + '"';
+  document.getElementById("all-results-count").textContent = srResults.length + " / " + srResults.length + " LOADED";
+  renderAR("all");
+  document.getElementById("all-results-page").style.display = "block";
 }
-
-function renderAllResults(filter) {
-  const items = filter === 'all' ? currentResults
-    : filter === 'episodes' ? []
-    : currentResults.filter(d => d.type === filter);
-  document.getElementById('all-results-grid').innerHTML = items.map(d => `
-    <div class="media-card">
-      <div class="card-poster ${d.cls}"></div>
-      <div class="card-overlay"></div>
-      <div class="card-info"><div class="card-name">${d.n}</div><div class="card-year">${d.y}</div></div>
-    </div>`).join('');
+function renderAR(filter) {
+  const items = filter === "all" ? srResults
+    : filter === "episodes" ? []
+    : srResults.filter(function(d){ return d.t === filter; });
+  document.getElementById("all-results-grid").innerHTML = items.map(function(d) {
+    return '<div class="media-card"><div class="card-poster ' + d.c + '"></div><div class="card-overlay"></div><div class="card-info"><div class="card-name">' + d.n + '</div><div class="card-year">' + d.y + '</div></div></div>';
+  }).join("");
 }
-
 function filterAR(btn, type) {
-  document.querySelectorAll('.ar-filter').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderAllResults(type);
+  document.querySelectorAll(".ar-filter").forEach(function(b){ b.classList.remove("active"); });
+  btn.classList.add("active");
+  renderAR(type);
 }
-
 function closeAllResults() {
-  document.getElementById('all-results-page').style.display = 'none';
+  document.getElementById("all-results-page").style.display = "none";
 }
 
 // ─── INIT ───
