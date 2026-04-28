@@ -1,4 +1,3 @@
-[README.md](https://github.com/user-attachments/files/27161282/README.md)
 <p align="center">
   <img src="assets/banner.svg" alt="TheHub – Jellyfin Theme & Mods" width="100%"/>
 </p>
