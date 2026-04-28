@@ -667,6 +667,7 @@
     popup.appendChild(makeDiceBtn('M','Zufälliger Film','Movie'));
     popup.appendChild(gearBtn);
 
+    var _wuerfelTimer=null;
     btn.addEventListener('click',function(e){
       e.stopPropagation();
       if(activePopup==='wuerfel'){closeAll();return;}
@@ -674,6 +675,8 @@
       activePopup='wuerfel';
       positionBelow(popup,btn,false);
       popup.style.display='flex';
+      clearTimeout(_wuerfelTimer);
+      _wuerfelTimer=setTimeout(function(){if(activePopup==='wuerfel')closeAll();},30000);
     });
     document.addEventListener('click',function(e){if(activePopup==='wuerfel'&&!wrap.contains(e.target)&&!popup.contains(e.target)){closeAll();}});
     window.addEventListener('scroll',function(){if(activePopup==='wuerfel')positionBelow(popup,btn,false);},true);
@@ -778,6 +781,7 @@
     var triDiv=document.createElement('div');triDiv.id='jf-tri-btn';triDiv.title='Streams / Chat / Request / Sync / Cast';triDiv.style.cssText='cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:32px;height:40px;background:none;border:none;outline:none;user-select:none;line-height:0;position:relative;';
     triDiv.innerHTML='<svg id="jf-tri-svg" width="12" height="10" viewBox="0 0 12 10" fill="rgba(255,255,255,0.85)" style="display:block;transition:transform 0.2s ease;transform:rotate(180deg);"><polygon points="6,0 12,10 0,10"/></svg><span id="jf-tri-badge"></span>';
 
+    var _triTimer=null;
     triDiv.addEventListener('click',function(e){
       e.stopPropagation();
       if(activePopup==='tri'){closeAll();return;}
@@ -787,6 +791,8 @@
       pill.style.display='flex';
       var svg=document.getElementById('jf-tri-svg');
       if(svg)svg.style.transform='rotate(0deg)';
+      clearTimeout(_triTimer);
+      _triTimer=setTimeout(function(){if(activePopup==='tri')closeAll();},30000);
     });
     document.addEventListener('click',function(e){
       if(activePopup==='tri'&&!triWrap.contains(e.target)&&!pill.contains(e.target)){
