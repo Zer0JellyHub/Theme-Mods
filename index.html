@@ -573,6 +573,138 @@ body {
 .p-romance { background: linear-gradient(135deg, #200010 0%, #50002a 50%, #300018 100%); }
 .p-adventure { background: linear-gradient(135deg, #001830 0%, #003860 50%, #002040 100%); }
 .p-family { background: linear-gradient(135deg, #201800 0%, #503800 50%, #302000 100%); }
+
+/* ─── TRIANGLE DROPDOWN ─── */
+.nav-right { position: relative; }
+.tri-btn { font-size: 11px !important; }
+.tri-drop {
+  position: absolute; top: calc(100% + 8px); right: 0;
+  background: rgba(22,27,34,0.97); border: 1px solid var(--border2);
+  border-radius: var(--r2); padding: 8px 0; min-width: 220px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  backdrop-filter: blur(12px); z-index: 500;
+  display: none;
+}
+.tri-drop.open { display: block; }
+.tri-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 18px; cursor: pointer; transition: background 0.15s;
+  font-size: 13px; color: var(--text2);
+}
+.tri-item:hover { background: var(--bg3); color: var(--text); }
+.tri-icon { font-size: 16px; width: 20px; text-align: center; }
+
+/* ─── SEARCH MODAL ─── */
+.search-modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px); z-index: 900;
+  display: none;
+}
+.search-modal-backdrop.open { display: block; }
+.search-modal {
+  position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+  width: min(660px, 92vw);
+  background: #1a1f27; border: 1px solid var(--border2);
+  border-radius: 16px; z-index: 901;
+  display: none; flex-direction: column;
+  max-height: calc(100vh - 120px); overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+}
+.search-modal.open { display: flex; }
+.search-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px 0;
+}
+.search-modal-title { font-size: 18px; font-weight: 600; }
+.search-modal-close {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--bg3); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 13px; color: var(--text2);
+}
+.search-modal-close:hover { background: var(--bg4); color: var(--text); }
+.search-modal-input-wrap {
+  display: flex; align-items: center; gap: 10px;
+  margin: 14px 20px; padding: 10px 16px;
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 10px;
+}
+.search-modal-input-wrap:focus-within { border-color: var(--accent2); }
+.search-modal-icon { font-size: 15px; color: var(--text2); }
+.search-modal-input {
+  flex: 1; background: none; border: none; outline: none;
+  font-size: 15px; color: var(--text); font-family: 'DM Sans', sans-serif;
+}
+.search-modal-input::placeholder { color: var(--text3); }
+.search-modal-body {
+  overflow-y: auto; padding: 0 20px 12px; flex: 1;
+  scrollbar-width: thin; scrollbar-color: var(--bg4) transparent;
+}
+.search-placeholder { text-align: center; padding: 40px 0; color: var(--text3); font-size: 13px; }
+.search-section-label {
+  font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--text3); font-weight: 600; margin: 16px 0 10px;
+}
+.search-results-row {
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
+  margin-bottom: 16px;
+}
+.search-results-row.movies { grid-template-columns: repeat(3, 1fr); }
+.search-result-card { cursor: pointer; }
+.search-result-card:hover .src-poster { transform: scale(1.04); }
+.src-poster {
+  aspect-ratio: 2/3; border-radius: 8px;
+  background-size: cover; background-position: center;
+  transition: transform 0.2s;
+}
+.src-name {
+  font-size: 10px; color: var(--text2); margin-top: 5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.src-year { font-size: 9px; color: var(--text3); }
+.search-result-count { font-size: 11px; color: var(--text2); margin-bottom: 12px; }
+.search-show-all { padding: 8px 20px 20px; }
+.search-show-all-btn {
+  width: 100%; padding: 10px; border-radius: 10px;
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text2); font-family: 'DM Sans', sans-serif;
+  font-size: 13px; cursor: pointer; transition: all 0.2s;
+}
+.search-show-all-btn:hover { background: var(--bg4); color: var(--text); }
+
+/* ─── ALL RESULTS PAGE ─── */
+.all-results-page {
+  position: fixed; inset: 0; background: var(--bg);
+  z-index: 950; overflow-y: auto; padding: 0;
+}
+.all-results-header {
+  display: flex; align-items: center; gap: 0;
+  padding: 20px 32px; border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; background: var(--bg); z-index: 10;
+}
+.all-results-header > span:first-child { font-size: 16px; font-weight: 500; }
+.all-results-close {
+  margin-left: auto; width: 32px; height: 32px; border-radius: 50%;
+  background: var(--bg3); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 14px; color: var(--text2);
+}
+.all-results-filters {
+  display: flex; gap: 8px; padding: 16px 32px;
+  border-bottom: 1px solid var(--border);
+}
+.ar-filter {
+  padding: 6px 18px; border-radius: 20px; font-size: 13px;
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text2); cursor: pointer; font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+}
+.ar-filter.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.all-results-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 16px; padding: 24px 32px;
+}
+
 </style>
 </head>
 <body>
@@ -597,9 +729,28 @@ body {
       <div class="logo" onclick="showPage('home')">The<span>Hub</span></div>
       <div class="nav-right">
         <div class="ping-badge"><div class="ping-dot"></div><span id="ping-ms">15ms</span></div>
-        <div class="icon-btn">🎲</div>
-        <div class="icon-btn">🔍</div>
+        <div class="icon-btn" id="dice-btn" onclick="diceClick()" title="Zufälliges Medium">🎲</div>
+        <div class="icon-btn" onclick="openSearch()" title="Suche">🔍</div>
+        <div class="icon-btn tri-btn" id="tri-btn" onclick="toggleTriDrop(event)" title="Aktionen">▲</div>
         <div class="avatar">SZ</div>
+        <!-- Triangle dropdown -->
+        <div class="tri-drop" id="tri-drop">
+          <div class="tri-item" title="Keine aktiven Streams">
+            <span class="tri-icon">📡</span><span class="tri-label">Keine aktiven Streams</span>
+          </div>
+          <div class="tri-item" title="Medien anfordern">
+            <span class="tri-icon">➡</span><span class="tri-label">Medien anfordern</span>
+          </div>
+          <div class="tri-item" title="Synchronwiedergabe">
+            <span class="tri-icon">👥</span><span class="tri-label">Synchronwiedergabe</span>
+          </div>
+          <div class="tri-item" title="Auf Gerät wiedergeben">
+            <span class="tri-icon">📺</span><span class="tri-label">Auf Gerät wiedergeben</span>
+          </div>
+          <div class="tri-item" title="Live-Chat">
+            <span class="tri-icon">💬</span><span class="tri-label">Live-Chat</span>
+          </div>
+        </div>
       </div>
     </nav>
     <!-- Sub Nav -->
@@ -957,6 +1108,42 @@ body {
       </div>
     </div>
 
+    <!-- ══════════════════════════ SEARCH MODAL ══════════════════════════ -->
+    <div class="search-modal-backdrop" id="search-backdrop" onclick="closeSearch()"></div>
+    <div class="search-modal" id="search-modal">
+      <div class="search-modal-header">
+        <span class="search-modal-title">Suche</span>
+        <div class="search-modal-close" onclick="closeSearch()">✕</div>
+      </div>
+      <div class="search-modal-input-wrap">
+        <span class="search-modal-icon">🔍</span>
+        <input class="search-modal-input" id="search-modal-input" type="text"
+               placeholder="Suche..." oninput="onSearchInput(this.value)" autocomplete="off">
+      </div>
+      <div class="search-modal-body" id="search-modal-body">
+        <div class="search-placeholder">Suchbegriff eingeben...</div>
+      </div>
+      <div class="search-show-all" id="search-show-all" style="display:none">
+        <button class="search-show-all-btn" id="search-show-all-btn" onclick="showAllResults()">Show all results</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════ ALL RESULTS PAGE ══════════════════════════ -->
+    <div class="all-results-page" id="all-results-page" style="display:none">
+      <div class="all-results-header">
+        <span id="all-results-title">All results for "…"</span>
+        <span id="all-results-count" style="font-size:12px;color:var(--text2);margin-left:12px;"></span>
+        <div class="all-results-close" onclick="closeAllResults()">✕</div>
+      </div>
+      <div class="all-results-filters">
+        <button class="ar-filter active" onclick="filterAR(this,'all')">All</button>
+        <button class="ar-filter" onclick="filterAR(this,'movies')">Movies</button>
+        <button class="ar-filter" onclick="filterAR(this,'series')">Series</button>
+        <button class="ar-filter" onclick="filterAR(this,'episodes')">Episodes</button>
+      </div>
+      <div class="all-results-grid" id="all-results-grid"></div>
+    </div>
+
   </div>
 </div>
 
@@ -1249,6 +1436,189 @@ function buildJFY() {
       <div class="card-info"><div class="card-name" style="font-size:9px">${n}</div><div class="card-year">${2015+Math.floor(Math.random()*11)}</div></div>
       <div class="card-rating" style="font-size:9px">★ ${(5.5+Math.random()*4).toFixed(1)}</div>
     </div>`).join('');
+}
+
+
+// ─── DICE ───
+const heroItems = [
+  {rating:'8.3',title:'MASHLE: MAGIC AND MUSCLES',meta:'2023 · Animation · Komödie · Action & Adventure',desc:'In einer Welt, in der ein jeder über magische Fähigkeiten verfügt, lebt in den Tiefen eines Waldes der junge Mann Mash Burnedead. Er kann keinen Funken Magie…',bg:'linear-gradient(135deg,#0a0020 0%,#1a0040 40%,#000820 100%)'},
+  {rating:'8.8',title:'Frieren – Nach dem Ende der Reise',meta:'2023 · Animation · Action & Adventure · Drama',desc:'Nach einer zehnjährigen Odyssee gelingt es der Elfenmagierin Frieren zusammen mit Himmels Heldengruppe, den Dämonenkönig zu stürzen…',bg:'linear-gradient(135deg,#001820 0%,#003850 40%,#001020 100%)'},
+  {rating:'8.3',title:'Date a Live',meta:'2013 · Animation · Sci-Fi & Fantasy · Komödie',desc:'In Date a Live geht es um den Jungen Shido Itsuka, der einem weiblichen Geist begegnet, welcher von einer verwüsteten Welt ausgeschlossen wurde…',bg:'linear-gradient(135deg,#100030 0%,#2a0060 40%,#080018 100%)'},
+  {rating:'8.0',title:'My Friend's Little Sister Has It In for Me!',meta:'2025 · Animation · Komödie',desc:'Für Oberschüler Akiteru Oboshi sind Jugenderfahrungen wie Spaß, Freundschaften und sogar eine Freundin, die reinste Zeitverschwendung…',bg:'linear-gradient(135deg,#200010 0%,#500028 40%,#180008 100%)'},
+  {rating:'10.0',title:'Zenonzard – The Animation',meta:'2019 · Animation · Action & Adventure · Sci-Fi & Fantasy',desc:'Das Jahr 20XX. Menschen, die "Concodes" genannt werden, und Ultrahochleistungs-KI, die "Codeman" genannt wird, treten als Freunde im Kartenspiel ZENONZARD auf…',bg:'linear-gradient(135deg,#001a30 0%,#003a70 40%,#001020 100%)'},
+  {rating:'7.7',title:'Grand Blue Dreaming',meta:'2018 · Animation · Komödie',desc:'Als Iori Kitahara auf die Uni geht, kommt er in Izu, im Tauchshop seines Onkels, dem Grand Blue unter. Er freut sich schon auf ein Studentenleben an der tosenden…',bg:'linear-gradient(135deg,#001030 0%,#003060 40%,#000818 100%)'},
+];
+let heroIndex = 0;
+function diceClick() {
+  heroIndex = (heroIndex + 1) % heroItems.length;
+  const item = heroItems[heroIndex];
+  const banner = document.querySelector('.hero-banner');
+  const bg = banner.querySelector('.hero-bg');
+  bg.style.background = item.bg;
+  banner.querySelector('.hero-rating').textContent = '★ ' + item.rating;
+  banner.querySelector('.hero-title-main').textContent = item.title;
+  banner.querySelector('.hero-meta').textContent = item.meta;
+  banner.querySelector('.hero-desc').textContent = item.desc;
+  // flash animation
+  const btn = document.getElementById('dice-btn');
+  btn.style.transform = 'rotate(180deg) scale(1.2)';
+  setTimeout(() => btn.style.transform = '', 300);
+  btn.style.transition = 'transform 0.3s';
+}
+
+// ─── TRIANGLE DROPDOWN ───
+function toggleTriDrop(e) {
+  e.stopPropagation();
+  const drop = document.getElementById('tri-drop');
+  drop.classList.toggle('open');
+}
+document.addEventListener('click', () => {
+  document.getElementById('tri-drop').classList.remove('open');
+});
+
+// ─── SEARCH MODAL ───
+const fakeSearchData = [
+  {n:'A Killer Romance',y:'2024',type:'movies',cls:'p-romance'},
+  {n:'A Million Ways to Die in the West',y:'2014',type:'movies',cls:'p-comedy'},
+  {n:'A Working Man',y:'2025',type:'movies',cls:'p-action'},
+  {n:'Akira',y:'1988',type:'movies',cls:'p-scifi'},
+  {n:'A Bridge to the Starry Skies',y:'2011',type:'series',cls:'p-romance'},
+  {n:'A Certain Magical Index',y:'2008',type:'series',cls:'p-scifi'},
+  {n:'A Certain Scientific Railgun',y:'2009',type:'series',cls:'p-scifi'},
+  {n:'A Certain Scientific Accelerator',y:'2019',type:'series',cls:'p-action'},
+  {n:'A Condition Called Love',y:'2024',type:'series',cls:'p-romance'},
+  {n:'A Couple of Cuckoos',y:'2022',type:'series',cls:'p-comedy'},
+  {n:'A Dark Rabbit has Seven Lives',y:'2011',type:'series',cls:'p-dark-fantasy'},
+  {n:'A Destructive God Sits Next to Me',y:'2020',type:'series',cls:'p-comedy'},
+  {n:'A Galaxy Next Door',y:'2023',type:'series',cls:'p-romance'},
+  {n:'A Gatherer's Adventure',y:'2025',type:'series',cls:'p-adventure'},
+  {n:'A Gentle Noble's Vacation Recommendation',y:'2026',type:'series',cls:'p-fantasy'},
+  {n:'A Girl & Her Guard Dog',y:'2023',type:'series',cls:'p-romance'},
+  {n:'A Hundred Scenes of Awajima',y:'2026',type:'series',cls:'p-mystery'},
+  {n:'A Journey Through Another World',y:'2024',type:'series',cls:'p-adventure'},
+  {n:'A Mangaka's Weird Daily Life',y:'2025',type:'series',cls:'p-comedy'},
+  {n:'A Misanthrope Teaches a Class for Demi-Humans',y:'2026',type:'series',cls:'p-comedy'},
+  {n:'A Ninja and an Assassin Under One Roof',y:'2025',type:'series',cls:'p-action'},
+  {n:'A Nobody's Way Up to an Exploration Hero',y:'2024',type:'series',cls:'p-adventure'},
+  {n:'A Playthrough of a Certain Dude's VRMMO Life',y:'2023',type:'series',cls:'p-adventure'},
+  {n:'A Returner's Magic Should Be Special',y:'2025',type:'series',cls:'p-dark-fantasy'},
+  {n:'A Salad Bowl of Eccentrics',y:'2024',type:'series',cls:'p-comedy'},
+  {n:'A Sign of Affection',y:'2024',type:'series',cls:'p-romance'},
+  {n:'A Sister's All You Need',y:'2017',type:'series',cls:'p-comedy'},
+  {n:'A Star Brighter Than the Sun',y:'2025',type:'series',cls:'p-romance'},
+  {n:'A Herbivorous Dragon of the Demon Lord's Army',y:'2022',type:'series',cls:'p-comedy'},
+  {n:'A Terrified Teacher at Ghoul School',y:'2024',type:'series',cls:'p-horror'},
+  {n:'Absolute Duo',y:'2015',type:'series',cls:'p-action'},
+  {n:'Assassination Classroom',y:'2015',type:'series',cls:'p-comedy'},
+  {n:'Attack on Titan',y:'2013',type:'series',cls:'p-action'},
+  {n:'Blue Lock',y:'2022',type:'series',cls:'p-action'},
+  {n:'BOCCHI THE ROCK!',y:'2022',type:'series',cls:'p-comedy'},
+  {n:'Chainsaw Man',y:'2022',type:'series',cls:'p-action'},
+  {n:'Classroom of the Elite',y:'2017',type:'series',cls:'p-mystery'},
+  {n:'Date a Live',y:'2013',type:'series',cls:'p-scifi'},
+  {n:'Demon Slayer',y:'2019',type:'series',cls:'p-action'},
+  {n:'Dragon Quest: Dais Abenteuer',y:'2020',type:'series',cls:'p-adventure'},
+  {n:'Family Guy',y:'1999',type:'series',cls:'p-comedy'},
+  {n:'Frieren: Beyond Journey's End',y:'2023',type:'series',cls:'p-dark-fantasy'},
+  {n:'Gabriel DropOut',y:'2017',type:'series',cls:'p-comedy'},
+  {n:'Grand Blue Dreaming',y:'2018',type:'series',cls:'p-comedy'},
+  {n:'Jujutsu Kaisen',y:'2020',type:'series',cls:'p-action'},
+  {n:'MASHLE: MAGIC AND MUSCLES',y:'2023',type:'series',cls:'p-comedy'},
+  {n:'My Dress-Up Darling',y:'2022',type:'series',cls:'p-romance'},
+  {n:'My Hero Academia',y:'2016',type:'series',cls:'p-action'},
+  {n:'Naruto Classic',y:'2002',type:'series',cls:'p-adventure'},
+  {n:'One Piece',y:'1999',type:'series',cls:'p-adventure'},
+  {n:'One Punch Man',y:'2015',type:'series',cls:'p-action'},
+  {n:'Overlord',y:'2015',type:'series',cls:'p-dark-fantasy'},
+  {n:'Solo Leveling',y:'2024',type:'series',cls:'p-action'},
+  {n:'Spy x Family',y:'2022',type:'series',cls:'p-comedy'},
+  {n:'Zenonzard – The Animation',y:'2019',type:'series',cls:'p-scifi'},
+];
+
+let currentQuery = '';
+let currentResults = [];
+
+function openSearch() {
+  document.getElementById('search-backdrop').classList.add('open');
+  document.getElementById('search-modal').classList.add('open');
+  setTimeout(() => document.getElementById('search-modal-input').focus(), 50);
+}
+function closeSearch() {
+  document.getElementById('search-backdrop').classList.remove('open');
+  document.getElementById('search-modal').classList.remove('open');
+  document.getElementById('search-modal-input').value = '';
+  document.getElementById('search-modal-body').innerHTML = '<div class="search-placeholder">Suchbegriff eingeben...</div>';
+  document.getElementById('search-show-all').style.display = 'none';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeSearch(); closeAllResults(); } });
+
+function onSearchInput(val) {
+  currentQuery = val.trim().toLowerCase();
+  const body = document.getElementById('search-modal-body');
+  const showAll = document.getElementById('search-show-all');
+  if (!currentQuery) {
+    body.innerHTML = '<div class="search-placeholder">Suchbegriff eingeben...</div>';
+    showAll.style.display = 'none';
+    return;
+  }
+  currentResults = fakeSearchData.filter(d => d.n.toLowerCase().includes(currentQuery));
+  const total = currentResults.length;
+  if (!total) {
+    body.innerHTML = '<div class="search-placeholder">Keine Ergebnisse für „' + val + '"</div>';
+    showAll.style.display = 'none';
+    return;
+  }
+  const movies = currentResults.filter(d => d.type === 'movies').slice(0, 3);
+  const series = currentResults.filter(d => d.type === 'series').slice(0, 12);
+  let html = '<div class="search-result-count">' + total + ' ERGEBNISSE FÜR „' + val.toUpperCase() + '"</div>';
+  if (movies.length) {
+    html += '<div class="search-section-label">MOVIES</div>';
+    html += '<div class="search-results-row movies">' + movies.map(d => cardHtml(d)).join('') + '</div>';
+  }
+  if (series.length) {
+    html += '<div class="search-section-label">SERIES</div>';
+    html += '<div class="search-results-row">' + series.map(d => cardHtml(d)).join('') + '</div>';
+  }
+  body.innerHTML = html;
+  document.getElementById('search-show-all-btn').textContent = 'Show all ' + total + ' results';
+  showAll.style.display = total > 0 ? 'block' : 'none';
+}
+
+function cardHtml(d) {
+  return '<div class="search-result-card"><div class="src-poster ' + d.cls + '"></div><div class="src-name">' + d.n + '</div><div class="src-year">' + d.y + '</div></div>';
+}
+
+function showAllResults() {
+  closeSearch();
+  const page = document.getElementById('all-results-page');
+  const q = document.getElementById('search-modal-input').value || currentQuery;
+  document.getElementById('all-results-title').textContent = 'All results for "' + q + '"';
+  document.getElementById('all-results-count').textContent = currentResults.length + ' / ' + currentResults.length + ' LOADED';
+  renderAllResults('all');
+  page.style.display = 'block';
+  page.scrollTo(0, 0);
+}
+
+function renderAllResults(filter) {
+  const items = filter === 'all' ? currentResults
+    : filter === 'episodes' ? []
+    : currentResults.filter(d => d.type === filter);
+  document.getElementById('all-results-grid').innerHTML = items.map(d => `
+    <div class="media-card">
+      <div class="card-poster ${d.cls}"></div>
+      <div class="card-overlay"></div>
+      <div class="card-info"><div class="card-name">${d.n}</div><div class="card-year">${d.y}</div></div>
+    </div>`).join('');
+}
+
+function filterAR(btn, type) {
+  document.querySelectorAll('.ar-filter').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAllResults(type);
+}
+
+function closeAllResults() {
+  document.getElementById('all-results-page').style.display = 'none';
 }
 
 // ─── INIT ───
