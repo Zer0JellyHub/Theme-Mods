@@ -1,3 +1,4 @@
+[README.md](https://github.com/user-attachments/files/27161282/README.md)
 <p align="center">
   <img src="assets/banner.svg" alt="TheHub – Jellyfin Theme & Mods" width="100%"/>
 </p>
@@ -31,8 +32,11 @@ A personal collection of JavaScript mods, UI tweaks and overlays for a self-host
 </p>
 
 > The interactive demo (`index.html`) mirrors the real HUD layout:
-> - **Two-row header** — top bar shows Logo + Ping/Dice/Search/Avatar; navigation tabs (Startseite, Favoriten, Watchlist …) sit in a dedicated row below
-> - **Media Bar** — hidden by default, revealed by clicking the ⚙ gear icon on the hero banner
+> - **Two-row header** — top bar shows Logo + Ping / 🎲 / 🔍 / ▲ / Avatar; navigation tabs sit in a dedicated row below
+> - **🎲 Dice** — cycles through hero banner items with animation
+> - **🔍 Search** — opens a full search modal with Movies / Series results and a "Show all results" full-page view with All / Movies / Series / Episodes filter
+> - **▲ Actions dropdown** — Keine aktiven Streams · Medien anfordern · Synchronwiedergabe · Auf Gerät wiedergeben · Live-Chat
+> - **⚙ Media Bar** — hidden by default, toggled via the gear icon on the hero banner
 > - **No internal IP** — demo uses `thehub.local` as placeholder
 
 ---
@@ -47,7 +51,7 @@ A personal collection of JavaScript mods, UI tweaks and overlays for a self-host
 | 🔖 Bookmarks | `Bookmarks home.js` | Bookmarks overlay on home |
 | 📅 Calendar | `Calendar.js` | "Coming Up" glassmorphism overlay — next 7 days |
 | ⭐ Ratings | `Rating Custom Tab Hud + Overlay.js` | Full ratings HUD with Movies / Series ranking, Watchlist, History, Search & Rate |
-| 👍 4U | separate script | Personalized recommendations overlay |
+| 👍 4U | `4u.js` | Personalized recommendations overlay |
 | 🎬 Version Selector | `Version Button Movies/Series.js` | Switch between multiple file versions (4K, 1080p, Dub, Sub…) |
 | 🔍 Search Fix | `K3nats Search Fix.js` | Custom search overlay, hides episodes from results |
 | 🎞️ Media Bar | `Fix Mediabar.js` + `Media bar extention.js` | Featured content slideshow bar — settings panel toggled via ⚙ gear icon |
@@ -65,7 +69,10 @@ A personal collection of JavaScript mods, UI tweaks and overlays for a self-host
 | **Ratings Overlay** | Full glassmorphism overlay with 5 tabs: Movies, Series, Watchlist, History, Search & Rate |
 | **24h Cache** | Rankings cached in localStorage — instant load after first open |
 | **k3ntas Integration** | Submit, change and delete ratings via the k3ntas ratings plugin API |
-| **Media Bar** | Random items filtered by minimum community rating — gear icon (⚙) toggles settings panel (min rating, item count, media type) |
+| **Media Bar** | Random items filtered by minimum community rating — ⚙ gear icon toggles settings panel (min rating, item count, media type) |
+| **🎲 Dice / Random** | Cycles through featured hero banner items |
+| **🔍 Search** | Modal with Movies / Series sections + full-page results view (All / Movies / Series / Episodes filter) |
+| **▲ Actions** | Dropdown: Keine aktiven Streams · Medien anfordern · Synchronwiedergabe · Auf Gerät wiedergeben · Live-Chat |
 | **Calendar** | Coming-up overlay showing upcoming episodes by day |
 | **Watch History** | Per-user history showing both movies and episodes (S1 E3 format) |
 | **Watchlist** | Per-user favorites as poster grid |
@@ -107,6 +114,7 @@ A personal collection of JavaScript mods, UI tweaks and overlays for a self-host
 ```
 TheHub/
 ├── index.html                           # Interactive demo page
+├── 4u.js                                # Personalized recommendations overlay
 ├── Rating Custom Tab Hud + Overlay.js   # Main ratings overlay (5 tabs)
 ├── Raiting k3ntas fix.js                # k3ntas API compatibility fix
 ├── K3nats Search Fix.js                 # Hide episodes from search
@@ -190,7 +198,7 @@ Intercepts Jellyfin's `/Items` and `/Search/Hints` API responses to remove `Type
 ## 📱 Mobile
 
 All overlays are mobile-optimised:
-- Header splits into two rows: Logo/Ping/Search/Avatar on top, all navigation tabs below
+- Header splits into two rows: Logo / Ping / 🎲 / 🔍 / ▲ / Avatar on top, all navigation tabs below
 - Tabs wrap automatically — no horizontal scrolling required
 - Poster grids adapt to screen width
 - Star picker works with touch
