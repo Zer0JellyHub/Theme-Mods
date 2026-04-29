@@ -90,6 +90,19 @@
     #mbrf-stars span { font-size:14px; }
     #mbrf-save { background:#7c6af7;border:none;border-radius:8px;color:#fff;font-weight:700;font-size:12px;padding:8px;cursor:pointer;width:100%;transition:opacity 0.2s; }
     #mbrf-save:hover { opacity:0.85; }
+
+    /* ── Auto-close countdown bar ─────────────────────────────────────────── */
+    #mbrf-countdown-bar {
+      width:100%;height:2px;border-radius:1px;
+      background:rgba(255,255,255,0.1);
+      overflow:hidden;
+    }
+    #mbrf-countdown-bar-inner {
+      height:100%;border-radius:1px;
+      background:#7c6af7;
+      width:100%;
+      transition:width 1s linear;
+    }
   `;
   document.head.appendChild(style);
 
@@ -122,11 +135,12 @@
       </div>
     </div>
     <button id="mbrf-save">🔄 Load New Random Selection</button>
+    <div id="mbrf-countdown-bar"><div id="mbrf-countdown-bar-inner"></div></div>
   `;
   document.body.appendChild(pill);
 
   pill.querySelectorAll('.mbrf-chip').forEach(function(c){
-    c.addEventListener('click',function(e){ e.stopPropagation(); pill.querySelectorAll('.mbrf-chip').forEach(function(x){x.classList.remove('on');}); c.classList.add('on'); });
+    c.addEventListener('click',function(e){ e.stopPropagation(); pill.querySelectorAll('.mbrf-chip').forEach(function(x){x.classList.remove('on');}); c.classList.add('on'); resetPillAutoClose(); });
   });
 
   function gradSet(el){ el.style.setProperty('--p',((el.value-el.min)/(el.max-el.min)*100).toFixed(1)+'%'); }
@@ -136,8 +150,48 @@
   }
   var rs=document.getElementById('mbrf-rs'), cs=document.getElementById('mbrf-cs');
   gradSet(rs); gradSet(cs); renderStars(cfg.minRating);
-  rs.addEventListener('input',function(){ document.getElementById('mbrf-rv').textContent=this.value==0?'–':this.value; gradSet(this); renderStars(parseFloat(this.value)); });
-  cs.addEventListener('input',function(){ document.getElementById('mbrf-cv').textContent=this.value; gradSet(this); });
+  rs.addEventListener('input',function(){ document.getElementById('mbrf-rv').textContent=this.value==0?'–':this.value; gradSet(this); renderStars(parseFloat(this.value)); resetPillAutoClose(); });
+  cs.addEventListener('input',function(){ document.getElementById('mbrf-cv').textContent=this.value; gradSet(this); resetPillAutoClose(); });
+
+  /* ── Auto-close logic ────────────────────────────────────────────────────── */
+  var PILL_TIMEOUT = 10; // seconds
+  var pillAutoCloseTimer = null;
+  var pillCountdownInterval = null;
+
+  function closePill(){
+    pillOpen = false;
+    pill.classList.remove('open');
+    clearPillAutoClose();
+  }
+
+  function clearPillAutoClose(){
+    if(pillAutoCloseTimer){ clearTimeout(pillAutoCloseTimer); pillAutoCloseTimer = null; }
+    if(pillCountdownInterval){ clearInterval(pillCountdownInterval); pillCountdownInterval = null; }
+  }
+
+  function startPillAutoClose(){
+    clearPillAutoClose();
+    var bar = document.getElementById('mbrf-countdown-bar-inner');
+    if(bar){ bar.style.transition = 'none'; bar.style.width = '100%'; }
+
+    /* Start countdown bar animation after a tiny delay so the reset is visible */
+    setTimeout(function(){
+      if(bar){ bar.style.transition = 'width 10s linear'; bar.style.width = '0%'; }
+    }, 30);
+
+    pillAutoCloseTimer = setTimeout(function(){
+      closePill();
+    }, PILL_TIMEOUT * 1000);
+  }
+
+  function resetPillAutoClose(){
+    if(pillOpen) startPillAutoClose();
+  }
+
+  /* Reset timer on any interaction inside the pill */
+  pill.addEventListener('mouseenter', resetPillAutoClose);
+  pill.addEventListener('mousemove',  resetPillAutoClose);
+  pill.addEventListener('touchstart', resetPillAutoClose, { passive: true });
 
   document.getElementById('mbrf-save').addEventListener('click',function(){
     cfg.minRating=parseFloat(rs.value); cfg.count=parseInt(cs.value);
@@ -146,7 +200,7 @@
     var b=document.getElementById('mbrf-gear-badge');
     b.textContent=cfg.minRating>0?cfg.minRating:'';
     cfg.minRating>0?b.classList.add('show'):b.classList.remove('show');
-    pill.classList.remove('open'); pillOpen=false;
+    closePill();
     rebuildSlides();
   });
 
@@ -158,9 +212,12 @@
       pill.style.bottom=(window.innerHeight-r.top+10)+'px';
       pill.style.left=Math.max(10,r.right-240)+'px';
       pill.style.top='auto'; pill.classList.add('open');
-    } else pill.classList.remove('open');
+      startPillAutoClose();
+    } else {
+      closePill();
+    }
   });
-  document.addEventListener('click',function(e){ if(pillOpen&&!gear.contains(e.target)&&!pill.contains(e.target)){pillOpen=false;pill.classList.remove('open');} });
+  document.addEventListener('click',function(e){ if(pillOpen&&!gear.contains(e.target)&&!pill.contains(e.target)){ closePill(); } });
 
   /* ── Jellyfin API ────────────────────────────────────────────────────────── */
   function getAC(){ return window.ApiClient; }
