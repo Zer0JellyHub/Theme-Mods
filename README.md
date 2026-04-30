@@ -18,7 +18,7 @@ A personal collection of JavaScript mods, UI tweaks and overlays for a self-host
 
 # 🎯 TheHub — Jellyfin Custom HUD
 
-> A full custom UI enhancement suite for Jellyfin — built for the **Ultrachromic / Kaleidochromic** theme.
+> A full custom UI enhancement suite for Jellyfin — built for the **Ultrachromic / Kaleidochromic** theme. dont work on TV
 
 ---
 
