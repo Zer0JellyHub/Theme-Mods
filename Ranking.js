@@ -4,6 +4,7 @@
    · Sofort aus Cache rendern
    · Nur letzte 24h inkrementell nachladen
    · Serien-Cache: 3 Monate TTL / Film-Cache: 6 Monate TTL
+   · Neuer User → automatischer Full-Reload
    ══════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
@@ -63,7 +64,13 @@
 
       /* Spalten-Header */
       '.jfr-col-head{display:flex;align-items:center;gap:6px;margin-bottom:16px;justify-content:space-between;}',
-      '.jfr-period{font-size:10px;color:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);border-radius:999px;padding:2px 8px;white-space:nowrap;margin-left:auto;}',
+
+      /* Period Badge — gut lesbar */
+      '.jfr-period{font-size:10px;color:rgba(255,255,255,.75);',
+        'border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.12);',
+        'border-radius:999px;padding:3px 10px;white-space:nowrap;margin-left:auto;',
+        'font-weight:500;letter-spacing:.02em;}',
+
       '.jfr-col-head svg{width:14px;height:14px;fill:rgba(255,255,255,.4);}',
       '.jfr-col-label{font-size:.68em;font-weight:600;letter-spacing:.1em;',
         'text-transform:uppercase;color:rgba(255,255,255,.3);}',
@@ -138,6 +145,14 @@
   /* ── Ticks → Stunden ── */
   function ticksToH(t) { return t / 36000000000; }
 
+  /* ── Prüft ob die User-Liste im Cache mit der aktuellen übereinstimmt ── */
+  function usersChanged(cachedUsers, liveUsers) {
+    if (!cachedUsers || cachedUsers.length !== liveUsers.length) return true;
+    var cachedIds = cachedUsers.map(function(u){ return u.Id; }).sort().join(',');
+    var liveIds   = liveUsers.map(function(u){ return u.Id; }).sort().join(',');
+    return cachedIds !== liveIds;
+  }
+
   /* ── Letzte 24h für einen User und Typ laden ── */
   function fetchDelta(userId, type, sinceIso) {
     var url = '/Users/'+userId+'/Items'
@@ -163,8 +178,8 @@
   }
 
   /* ── Ranking aktualisieren ── */
-  function updateRanking(onProgress) {
-    var cache = loadCache() || freshCache();
+  function updateRanking(forceCache) {
+    var cache = forceCache || loadCache() || freshCache();
     var now   = Date.now();
 
     /* TTL-Check: Cache komplett zurücksetzen wenn abgelaufen */
@@ -190,13 +205,11 @@
         ).then(function(items) {
           if (!cache.filmData[uid2]) cache.filmData[uid2] = { count:0, hours:0 };
           if (isDelta) {
-            /* Nur neue hinzuaddieren */
             items.forEach(function(it) {
               cache.filmData[uid2].count++;
               cache.filmData[uid2].hours += ticksToH(it.RunTimeTicks||0);
             });
           } else {
-            /* Vollständig ersetzen */
             var totalH = items.reduce(function(s,it){ return s+ticksToH(it.RunTimeTicks||0); },0);
             cache.filmData[uid2] = { count: items.length, hours: totalH };
           }
@@ -368,19 +381,35 @@
     /* Sofort aus Cache rendern wenn vorhanden */
     if (cache && cache.users) {
       renderFromCache(cache);
-      /* Nur nachladen wenn letzter Delta > 24h her */
-      var needsDelta = !cache.lastDelta || (Date.now() - cache.lastDelta) > DELTA_WINDOW;
-      if (!needsDelta) {
-        setStatus('· up to date');
-        return;
-      }
-      setStatus('· updating…');
+      setStatus('· checking…');
     } else {
       setStatus('· loading…');
     }
 
-    /* Inkrementell / Full nachladen */
-    updateRanking().then(function(result) {
+    /* Aktuelle User-Liste holen — prüfen ob sich was geändert hat */
+    jfetch('/Users').then(function(liveUsers) {
+      if (!Array.isArray(liveUsers)) liveUsers = [];
+
+      /* Neuer User erkannt → Cache komplett verwerfen und Full-Reload */
+      if (usersChanged(cache && cache.users, liveUsers)) {
+        console.log('[Ranking] User-Liste geändert → Full-Reload');
+        cache = freshCache();
+        saveCache(cache);
+        setStatus('· new user detected, reloading…');
+        return updateRanking(cache);
+      }
+
+      /* Nur nachladen wenn letzter Delta > 24h her */
+      var needsDelta = !cache.lastDelta || (Date.now() - cache.lastDelta) > DELTA_WINDOW;
+      if (!needsDelta) {
+        setStatus('· up to date');
+        return null;
+      }
+      setStatus('· updating…');
+      return updateRanking(cache);
+
+    }).then(function(result) {
+      if (!result) return;
       renderFromCache(result.cache);
       setStatus('· updated just now');
     }).catch(function() {
@@ -390,11 +419,9 @@
 
   /* ── Tab patchen — Calendar-Pattern ── */
   function patchTab() {
-    /* Alle möglichen Tab-Selektoren wie Calendar */
     var allBtns = document.querySelectorAll('[id^="customTabButton"], .emby-tab-button, [class*="tabButton"]');
     allBtns.forEach(function(btn) {
       if (btn.dataset.jfRankPatched) return;
-      /* Nur den Text-Inhalt des Labels prüfen, nicht des ganzen Buttons */
       var labelEl = btn.querySelector('.emby-tab-button-text, .emby-button-foreground, span') || btn;
       var txt = (labelEl.textContent || btn.textContent || '').trim().toLowerCase();
       if (txt.indexOf('ranking') === -1) return;
