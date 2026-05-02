@@ -22,8 +22,8 @@ A personal collection of JavaScript mods, UI tweaks and overlays for a self-host
 
 ---
 
-## 📸 Preview
-
+## 📸 Preview 
+Not 100% accurate
 <p align="center">
   <a href="https://zer0jellyhub.github.io/TheHub/">
     <img src="https://img.shields.io/badge/🎬_Live_Demo-Try_it_interactively-7c6af7?style=for-the-badge" alt="Live Demo"/>
