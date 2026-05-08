@@ -164,12 +164,32 @@
       var sc = document.createElement('style');
       sc.id = 'jbi-sov-css';
       sc.textContent = [
-        '#jbi-search-fullscreen{position:fixed;top:80px;left:50%;transform:translateX(-50%);',
-          'width:680px;max-height:78vh;z-index:99999;',
+        /* ═══════════════════════════════════════════════════════
+           HAUPT-OVERLAY — Mobile-first, Desktop via min()
+           ═══════════════════════════════════════════════════════ */
+        '#jbi-search-fullscreen{',
+          'position:fixed;',
+          'top:80px;',
+          'left:50%;',
+          'transform:translateX(-50%);',
+          /* Desktop: max 680px; Mobile: volle Breite minus 16px Rand */
+          'width:min(680px,calc(100% - 16px));',
+          'max-height:78vh;',
+          'z-index:99999;',
           'display:flex;flex-direction:column;overflow:hidden;',
           'background:#1c1c1c;border-radius:12px;',
           'box-shadow:0 8px 40px rgba(0,0,0,.8);',
           'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}',
+
+        /* Auf schmalen Screens: weniger Abstand oben, mehr Höhe */
+        '@media(max-width:720px){',
+          '#jbi-search-fullscreen{',
+            'top:12px;',
+            'max-height:92vh;',
+            'border-radius:10px;',
+          '}',
+        '}',
+
         '#jbi-sov-head{display:flex;flex-direction:column;',
           'padding:20px 20px 14px;',
           'flex-shrink:0;}',
@@ -252,7 +272,6 @@
     var body = document.createElement('div');
     body.id = 'jbi-sov-body';
     body.innerHTML = '<div class="jbi-sov-spin">Suche läuft…</div>';
-    /* Reset list on new search */
     ov.appendChild(body);
 
     document.body.appendChild(ov);
@@ -327,7 +346,6 @@
     var allLoadedItems = [];
 
     function fetchPage(startIndex, append) {
-      /* _origFetch bypasses the search-filter interceptor → keine doppelte JSON-Verarbeitung */
       var _rawFetch = window._origFetch || window.fetch;
       _rawFetch(serverUrl+'/Users/'+userId+'/Items'
         +'?SearchTerm='+encodeURIComponent(query.trim())
@@ -343,10 +361,8 @@
         if (!append) {
           allLoadedItems = items;
           body.innerHTML = '';
-          /* list will be recreated */
         } else {
           allLoadedItems = allLoadedItems.concat(items);
-          /* Alten "Show more" Button entfernen */
           var old = document.getElementById('jbi-sov-more');
           if (old) old.remove();
         }
@@ -358,7 +374,6 @@
           return;
         }
 
-        /* Neue Items rendern */
         var movies   = items.filter(function(i){ return i.Type === 'Movie'; });
         var series   = items.filter(function(i){ return i.Type === 'Series'; });
         var episodes = items.filter(function(i){ return i.Type === 'Episode'; });
@@ -413,7 +428,7 @@
           });
         }
 
-        /* "Show more" Button → öffnet Vollbild-Overlay mit allen Ergebnissen */
+        /* "Show more" Button */
         if (total > 10) {
           var moreBtn = document.createElement('button');
           moreBtn.id = 'jbi-sov-more';
@@ -425,7 +440,7 @@
           moreBtn.onmouseover = function(){ moreBtn.style.background='rgba(255,255,255,.16)';moreBtn.style.color='#fff'; };
           moreBtn.onmouseout  = function(){ moreBtn.style.background='rgba(255,255,255,.08)';moreBtn.style.color='rgba(255,255,255,.8)'; };
           moreBtn.addEventListener('click', function() {
-            closeSearchOv(); /* kleines Modal schließen */
+            closeSearchOv();
             openAllResultsOverlay(query, total, serverUrl, userId, token, imgUrl, navToItem);
           });
           body.appendChild(moreBtn);
@@ -622,18 +637,14 @@
       '#jf-pill #chatBtn{display:inline-flex!important;visibility:visible!important;width:40px!important;height:40px!important;min-width:40px!important;padding:0!important;margin:0!important;position:relative!important;left:auto!important;opacity:1!important;pointer-events:auto!important;flex-shrink:0!important;}',
       '#jf-pill #je-active-streams{display:inline-flex!important;visibility:visible!important;width:40px!important;min-width:40px!important;height:40px!important;padding:0!important;margin:0!important;position:relative!important;left:auto!important;opacity:1!important;pointer-events:auto!important;flex-shrink:0!important;align-items:center!important;justify-content:center!important;}',
       '#jf-pill>*,#jf-pill button{flex-shrink:0!important;margin:0!important;}',
-      /* Streams-Panel nach links verschieben damit Dreieck nicht verdeckt wird */
       '#je-active-streams-panel{right:auto!important;left:auto!important;transform:none!important;}',
       '.headerAudioPlayerButton{display:none!important;}',
       'span.headerSelectedPlayer{display:none!important;}',
       '#randomItemButtonContainer{display:none!important;}',
-      /* IP-Adresse im Streams-Panel ausblenden */
       '.je-as-user{display:none!important;}',
       '.je-as-broadcast-form a[href*="192."],.je-as-broadcast-form a[href*="10."],.je-as-broadcast-form a[href*="http"]{display:none!important;}',
       '#jf-pill #je-active-streams-panel a[href*="http"],.je-as-card-direct{display:none!important;}',
       '#jf-tri-badge{position:absolute;top:-3px;right:-5px;background:#e53935;color:#fff;font-size:9px;font-weight:700;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-width:14px;height:14px;border-radius:7px;display:none;align-items:center;justify-content:center;padding:0 3px;pointer-events:none;line-height:1;z-index:2;}',
-      /* Action Sheets immer mittig — CSS schlägt JS-Inline-Styles */
-      /* Nur Sync/Cast Dialoge mittig — KefinTweaks und andere ausschließen */
       '.syncPlayGroupMenu.opened{left:50%!important;transform:translateX(-50%)!important;right:auto!important;margin:0!important;top:58px!important;}',
       '.focuscontainer.dialog.actionSheet.opened:not(.kefinTweaks-popover):not([class*="kefin"]):not([class*="season"]):not([class*="popover"]){left:50%!important;transform:translateX(-50%)!important;right:auto!important;margin:0!important;top:58px!important;}'
     ].join('\n');
@@ -697,7 +708,6 @@
 
     var pill=document.createElement('div');pill.id='jf-pill';pill.style.cssText=PILL_BASE;
 
-    /* Streams: ganz links in die Pill — MutationObserver wie bei Chat */
     var LIVE_SVG = '<svg width="26" height="26" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.87)" stroke-width="1.7" stroke-linecap="round" style="display:block;">'
       + '<path d="M9.5 10a6 6 0 0 0 0 8"/>'
       + '<path d="M6.5 7.5a10 10 0 0 0 0 13"/>'
@@ -709,9 +719,7 @@
     function addStreamsBtn() {
       var sb = document.querySelector('#je-active-streams');
       if (!sb || pill.contains(sb)) return;
-      /* Original-Icon durch Live-SVG ersetzen */
       if (!sb.querySelector('#jf-live-svg')) {
-        /* Alle Kindelemente verstecken */
         Array.prototype.forEach.call(sb.children, function(c){ c.style.setProperty('display','none','important'); });
         var svgWrap = document.createElement('span');
         svgWrap.id = 'jf-live-svg';
@@ -726,12 +734,10 @@
       sb.style.setProperty('margin','0','important');
       sb.style.setProperty('width','40px','important');
       sb.style.setProperty('height','40px','important');
-      /* Ganz links einfügen */
       pill.insertBefore(sb, pill.firstChild);
     }
     addStreamsBtn();
 
-    /* Klick auf Streams-Button → Panel unter Pill positionieren */
     document.addEventListener('click', function(e) {
       var sb = document.getElementById('je-active-streams');
       if (!sb || !sb.contains(e.target)) return;
@@ -743,8 +749,6 @@
         var pillRect = pill.getBoundingClientRect();
         panel.style.setProperty('position', 'fixed', 'important');
         panel.style.setProperty('top', (pillRect.bottom + 6) + 'px', 'important');
-        /* Rechter Rand bündig mit Bildschirmrand — nie abgeschnitten */
-        /* Bündig am rechten Bildschirmrand — nie abgeschnitten */
         panel.style.setProperty('left', '50%', 'important');
         panel.style.setProperty('right', 'auto', 'important');
         panel.style.setProperty('transform', 'translateX(-50%)', 'important');
@@ -763,20 +767,16 @@
     streamsWatcher.observe(document.body, {childList:true, subtree:true});
     setTimeout(function(){ streamsWatcher.disconnect(); }, 15000);
 
-    /* Chat: Original verschieben */
     function addChatBtn(){var cb=document.querySelector('#chatBtn');if(!cb||pill.contains(cb))return;cb.style.setProperty('display','inline-flex','important');cb.style.setProperty('width','40px','important');cb.style.setProperty('height','40px','important');cb.style.setProperty('flex-shrink','0','important');cb.style.removeProperty('margin');pill.appendChild(cb);startBadgeSync();}
     addChatBtn();
     var chatWatcher=new MutationObserver(function(){if(document.querySelector('#chatBtn')){addChatBtn();chatWatcher.disconnect();}});
     chatWatcher.observe(document.body,{childList:true,subtree:true});
     setTimeout(function(){chatWatcher.disconnect();},10000);
 
-    /* Request: Original verschieben */
     if(requestBtn){requestBtn.style.setProperty('display','inline-flex','important');requestBtn.style.setProperty('width','40px','important');requestBtn.style.setProperty('height','40px','important');requestBtn.style.setProperty('flex-shrink','0','important');requestBtn.style.setProperty('margin','0','important');pill.appendChild(requestBtn);}
 
-    /* Sync + Cast: Original verschieben */
     [syncBtn,castBtn].forEach(function(el){if(!el)return;el.style.setProperty('display','inline-flex','important');el.style.setProperty('flex-shrink','0','important');el.style.setProperty('margin','0','important');pill.appendChild(el);});
 
-    /* Dreieck */
     var triWrap=document.createElement('div');triWrap.id='jf-tri-wrap';triWrap.style.cssText='position:relative;display:inline-flex;align-items:center;margin-left:2px;';
     var triDiv=document.createElement('div');triDiv.id='jf-tri-btn';triDiv.title='Streams / Chat / Request / Sync / Cast';triDiv.style.cssText='cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:32px;height:40px;background:none;border:none;outline:none;user-select:none;line-height:0;position:relative;';
     triDiv.innerHTML='<svg id="jf-tri-svg" width="12" height="10" viewBox="0 0 12 10" fill="rgba(255,255,255,0.85)" style="display:block;transition:transform 0.2s ease;transform:rotate(180deg);"><polygon points="6,0 12,10 0,10"/></svg><span id="jf-tri-badge"></span>';
@@ -804,9 +804,7 @@
 
     triWrap.appendChild(triDiv);hr.appendChild(triWrap);document.body.appendChild(pill);
 
-    /* ── Pill: alle Buttons schließen sich gegenseitig ── */
     pill.addEventListener('click', function() {
-      /* Alle offenen Jellyfin-Dialoge schließen */
       document.querySelectorAll('.actionSheet.opened, .dialog.actionSheet').forEach(function(d) {
         var cb = d.querySelector('.btnCancel,.btnClose,[data-action="cancel"],[data-action="close"]');
         if (cb) cb.click();
@@ -815,17 +813,15 @@
           if (backdrop) backdrop.click();
         }
       });
-      /* Streams-Panel schließen */
       var sp = document.getElementById('je-active-streams-panel');
       if (sp && sp.classList.contains('je-as-panel-open')) {
         var sb = document.getElementById('je-active-streams');
-        if (sb) sb.click(); /* Toggle: einmal klicken schließt es */
+        if (sb) sb.click();
       }
-    }, true); /* capture=true → läuft VOR dem Button-Handler */
+    }, true);
   }
 
   /* ── STREAMS-PANEL REPOSITIONER ── */
-  /* Wenn das Panel aufgeht, links vom Dreieck positionieren */
   new MutationObserver(function(mutations) {
     mutations.forEach(function(m) {
       m.addedNodes.forEach(function(node) {
@@ -847,7 +843,6 @@
     var pill = document.getElementById('jf-pill');
     if (!pill) return;
     var pillRect = pill.getBoundingClientRect();
-    /* Panel unten bündig unter dem Langloch — linksbündig mit Pill */
     panel.style.setProperty('position', 'fixed', 'important');
     panel.style.setProperty('right', 'auto', 'important');
     panel.style.setProperty('left', pillRect.left + 'px', 'important');
@@ -856,34 +851,26 @@
     panel.style.setProperty('border-radius', '12px', 'important');
   }
 
-  /* ── ACTION SHEET REPOSITIONER (Sync/Cast/Watchgroup Popups unter Pill) ── */
+  /* ── ACTION SHEET REPOSITIONER ── */
   function repositionActionSheet(el) {
     if (!el || !el.classList) return;
     if (!el.classList.contains('actionSheet') && !el.classList.contains('dialog')) return;
-    /* Nur wenn aus der Pill ausgelöst (Pill sichtbar) */
     var pill = document.getElementById('jf-pill');
     if (!pill || pill.style.display === 'none') return;
-
-    /* KefinTweaks und Popover-Dialoge nicht anfassen */
     if (el.classList.contains('kefinTweaks-popover') ||
         el.className.indexOf('kefin') > -1 ||
         el.className.indexOf('season') > -1 ||
         el.className.indexOf('popover') > -1) return;
-
-    /* Gegenseitiges Schließen: alle anderen offenen Action Sheets schließen */
     document.querySelectorAll('.actionSheet.opened, .dialog.opened').forEach(function(other) {
       if (other === el) return;
-      /* Jellyfin's eigene Close-Funktion aufrufen */
       var closeBtn = other.querySelector('.btnCancel, .btnClose, [data-action="cancel"]');
       if (closeBtn) {
         closeBtn.click();
       } else {
-        /* Fallback: backdrop klicken */
         var backdrop = document.querySelector('.dialogBackdropOpened');
         if (backdrop) backdrop.click();
       }
     });
-
     var pillRect = pill.getBoundingClientRect();
     el.style.setProperty('position', 'fixed', 'important');
     el.style.setProperty('top', (pillRect.bottom + 8) + 'px', 'important');
@@ -894,14 +881,12 @@
     el.style.setProperty('z-index', '9999998', 'important');
   }
 
-  /* Style-Watcher: korrigiert Position sofort wenn Jellyfin sie überschreibt */
   var sheetStyleObs = new MutationObserver(function(mutations) {
     mutations.forEach(function(m) {
       var el = m.target;
       if (!el.classList) return;
       if (!el.classList.contains('actionSheet') && !el.classList.contains('dialog')) return;
       if (!el.classList.contains('opened')) return;
-      /* Wenn left nicht 50% ist → sofort korrigieren */
       if (el.style.left !== '50%') {
         repositionActionSheet(el);
       }
@@ -910,11 +895,9 @@
 
   new MutationObserver(function(mutations) {
     mutations.forEach(function(m) {
-      /* Neues Dialog-Element hinzugefügt */
       m.addedNodes.forEach(function(node) {
         if (node.nodeType !== 1) return;
         if (node.classList && (node.classList.contains('actionSheet') || node.classList.contains('focuscontainer'))) {
-          /* Mehrfach feuern + Style-Watcher starten */
           [0, 50, 150, 300].forEach(function(delay) {
             setTimeout(function() { repositionActionSheet(node); }, delay);
           });
@@ -922,7 +905,6 @@
           setTimeout(function() { sheetStyleObs.disconnect(); }, 5000);
         }
       });
-      /* Class-Änderung: 'opened' wurde hinzugefügt */
       if (m.type === 'attributes' && m.target.classList) {
         if (m.target.classList.contains('opened') &&
             (m.target.classList.contains('actionSheet') || m.target.classList.contains('dialog'))) {
@@ -972,13 +954,11 @@
   function suppressSearchPage() {
     var hash = window.location.hash || '';
     if (hash.indexOf('search.html') !== -1 || hash.indexOf('/search') !== -1) {
-      /* Suche-Seite → sofort zurück */
       if (window.history.length > 1) {
         window.history.back();
       } else {
         window.location.hash = '#!/home.html';
       }
-      /* Custom Search Modal öffnen */
       setTimeout(function() {
         var jbiSearchBtn = document.getElementById('jbi-search-btn');
         if (jbiSearchBtn) jbiSearchBtn.click();
