@@ -62,8 +62,33 @@ function injectCSS(){
 #jcf-result{font-size:18px;font-weight:700;min-height:26px;color:#fff;
   transition:opacity .3s;}
 #jcf-count{font-size:10px;color:rgba(255,255,255,.25);margin-top:8px;letter-spacing:.06em;}
+
+/* Fortschrittsbalken zeigt verbleibende Zeit bis Auto-Close */
+#jcf-autoclose-bar{height:3px;border-radius:0 0 16px 16px;
+  position:absolute;bottom:0;left:0;width:100%;
+  background:rgba(255,255,255,.08);overflow:hidden;}
+#jcf-autoclose-progress{height:100%;width:100%;
+  background:rgba(0,164,220,.5);
+  transition:width linear;}
   `;
   document.head.appendChild(s);
+}
+
+var autoCloseTimer = null;
+var escHandler = null;
+var AUTO_CLOSE_MS = 20000;
+
+function resetAutoClose(){
+  clearTimeout(autoCloseTimer);
+  var bar = document.getElementById('jcf-autoclose-progress');
+  if(bar){
+    bar.style.transition='none';
+    bar.style.width='100%';
+    void bar.offsetWidth;
+    bar.style.transition='width '+AUTO_CLOSE_MS+'ms linear';
+    bar.style.width='0%';
+  }
+  autoCloseTimer = setTimeout(closeModal, AUTO_CLOSE_MS);
 }
 
 function buildModal(){
@@ -82,6 +107,7 @@ function buildModal(){
   <button id="jcf-btn-flip">Flip!</button>
   <div id="jcf-result"></div>
   <div id="jcf-count"></div>
+  <div id="jcf-autoclose-bar"><div id="jcf-autoclose-progress"></div></div>
 </div>`;
   document.body.appendChild(modal);
 
@@ -89,42 +115,41 @@ function buildModal(){
 
   document.getElementById('jcf-close').onclick=closeModal;
   modal.addEventListener('click',function(e){if(e.target===modal)closeModal();});
-  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal();});
+
+  /* Jede Interaktion im Modal setzt den 20s-Timer zurück */
+  document.getElementById('jcf-box').addEventListener('click', resetAutoClose);
 
   var coin=document.getElementById('jcf-coin');
   var btn=document.getElementById('jcf-btn-flip');
   var result=document.getElementById('jcf-result');
   var count=document.getElementById('jcf-count');
   var flipping=false;
-  var currentSide=0; /* 0=heads, 1=tails */
+  var currentSide=0;
 
   function doFlip(){
     if(flipping)return;
     flipping=true;
     btn.disabled=true;
     result.style.opacity='0';
+    resetAutoClose();
 
     var isHeads=Math.random()<0.5;
-    /* Ziel-Rotation: gerade Zahl=heads, ungerade=tails relativ zur aktuellen */
-    var spins=10+Math.floor(Math.random()*6); /* 10-15 halbe Umdrehungen */
-    /* Sicherstellen dass wir auf der richtigen Seite landen */
+    var spins=10+Math.floor(Math.random()*6);
     if(isHeads && spins%2!==0) spins++;
     if(!isHeads && spins%2===0) spins++;
 
     var endRot=(currentSide===0?0:180)+(spins*180);
     coin.style.setProperty('--end-rot', endRot+'deg');
     coin.classList.remove('flip');
-    void coin.offsetWidth; /* reflow */
+    void coin.offsetWidth;
     coin.classList.add('flip');
 
     setTimeout(function(){
       coin.classList.remove('flip');
       coin.style.transform='rotateY('+endRot+'deg)';
       currentSide=endRot/180%2===0?0:1;
-
       flipping=false;
       btn.disabled=false;
-
       if(isHeads){stats.heads++;result.textContent='👑 HEADS!';}
       else{stats.tails++;result.textContent='⚡ TAILS!';}
       result.style.opacity='1';
@@ -139,16 +164,23 @@ function buildModal(){
 function openModal(){
   buildModal();
   document.getElementById(MODAL_ID).classList.add('open');
+  if(escHandler) document.removeEventListener('keydown', escHandler);
+  escHandler = function(e){ if(e.key==='Escape') closeModal(); };
+  document.addEventListener('keydown', escHandler);
+  resetAutoClose(); /* Timer + Balken starten */
 }
+
 function closeModal(){
+  clearTimeout(autoCloseTimer);
+  autoCloseTimer = null;
   var m=document.getElementById(MODAL_ID);
-  if(m)m.classList.remove('open');
+  if(m) m.classList.remove('open');
+  if(escHandler){ document.removeEventListener('keydown', escHandler); escHandler=null; }
 }
 
 function buildPillBtn(){
   if(document.getElementById(BTN_ID))return;
   var pill=document.getElementById('jf-pill');if(!pill)return;
-
   var btn=document.createElement('button');
   btn.id=BTN_ID;btn.title='Heads or Tails';
   btn.innerHTML=`<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
