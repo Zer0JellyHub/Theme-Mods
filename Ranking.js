@@ -5,11 +5,13 @@
    · Nur letzte 24h inkrementell nachladen
    · Serien-Cache: 3 Monate TTL / Film-Cache: 6 Monate TTL
    · Neuer User → automatischer Full-Reload
+   · API_KEY für Admin-Zugriff → alle User sehen dasselbe
    ══════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
 
   var CACHE_KEY    = 'jfrank_v2';
+  var API_KEY      = 'DEIN_API_KEY_HIER';   /* ← Jellyfin Dashboard → API-Keys → ➕ */
   var TTL_FILM     = 6  * 30 * 24 * 3600000; /* 6 Monate */
   var TTL_SERIES   = 3  * 30 * 24 * 3600000; /* 3 Monate */
   var DELTA_WINDOW = 24 * 3600000;            /* 24 Stunden */
@@ -115,12 +117,13 @@
   /* ── API ── */
   function ac() { return window.ApiClient; }
   function srv() { var a=ac(); return a?(a._serverAddress||a._serverUrl||'').replace(/\/$/,''):''; }
-  function tok() { var a=ac(); return a?(a._token||(a.accessToken&&a.accessToken())||''):''; }
-  function uid() { var a=ac(); return a?(a._currentUserId||(a.getCurrentUserId&&a.getCurrentUserId())||''):''; }
 
+  /* Immer API_KEY verwenden → alle User haben Admin-Sicht */
   function jfetch(path) {
-    return fetch(srv()+path, { headers:{'X-Emby-Token':tok()} })
-      .then(function(r){ return r.ok?r.json():null; })
+    return fetch(srv() + path, {
+      headers: { 'X-Emby-Token': API_KEY }
+    })
+      .then(function(r){ return r.ok ? r.json() : null; })
       .catch(function(){ return null; });
   }
 
