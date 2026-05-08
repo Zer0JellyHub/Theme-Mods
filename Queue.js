@@ -1,30 +1,30 @@
 (function () {
     'use strict';
-
-    var QUEUE_KEY = 'jf_queue_v1';
+ 
+    var QUEUE_KEY = 'jf_queue_v2';   /* bumped so stale entries are discarded */
     var OV_ID     = 'jfq-overlay';
     var CSS_ID    = 'jfq-css-v3';
     var searchTmr = null;
-
+ 
     var TAB_ICON =
         '<span class="jf-tab-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">'
         + '<path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v-2H3v2z'
         + 'M17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z"/>'
         + '</svg></span>';
-
+ 
     var queue = loadQueue();
     var currentIdx = -1;
     var lastPlayingId = null;
-
+ 
     var PLAYABLE_TYPES = { movie: 1, series: 1, episode: 1, boxset: 1 };
-
+ 
     function loadQueue() {
         try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); } catch (e) { return []; }
     }
     function saveQueue() {
         try { localStorage.setItem(QUEUE_KEY, JSON.stringify(queue)); } catch (e) { }
     }
-
+ 
     function ac()  { return window.ApiClient; }
     function srv() { var a=ac(); return a?(a._serverAddress||a._serverUrl||'').replace(/\/$/,''):''; }
     function tok() { var a=ac(); return a?(a._token||(a.accessToken&&a.accessToken())||''):''; }
@@ -33,7 +33,7 @@
         return fetch(srv()+path,{headers:{'X-Emby-Token':tok()}})
             .then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});
     }
-
+ 
     function thumb(item) {
         if (!item) return '';
         var base = srv()+'/Items/'+(item.Id||item.id)+'/Images/';
@@ -44,7 +44,7 @@
         if (item.ParentBackdropItemId) return srv()+'/Items/'+item.ParentBackdropItemId+'/Images/Backdrop?maxWidth=400'+key;
         return '';
     }
-
+ 
     function isInQueue(id) {
         for (var i=0;i<queue.length;i++){if(queue[i].id===id)return true;}return false;
     }
@@ -52,13 +52,34 @@
         for (var i=0;i<queue.length;i++){if(queue[i].id===id)return i;}return -1;
     }
     function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-    function addItem(raw) {
-        var id=raw.Id||raw.id;
-        if(isInQueue(id)){toast((raw.Name||raw.name||'?')+' is already in the queue');return;}
-        queue.push({id:id,name:raw.Name||raw.name||'?',type:raw.Type||raw.type||'',thumbUrl:thumb(raw)});
-        saveQueue();renderQueue();syncAllCardButtons();
+ 
+    /* ── Fetch the exact name shown on the episode detail page and patch queue entry ── */
+    function resolveEpisodeName(id) {
+        jfetch('/Users/'+uid()+'/Items/'+id+'?Fields=Name,OriginalTitle').then(function(item) {
+            if (!item) return;
+            var detailName = (item.Name && item.Name.trim()) ? item.Name.trim() : null;
+            if (!detailName) return;
+            for (var i = 0; i < queue.length; i++) {
+                if (queue[i].id === id && queue[i].name !== detailName) {
+                    queue[i].name = detailName;
+                    saveQueue();
+                    renderQueue();
+                    break;
+                }
+            }
+        });
     }
+ 
+    function addItem(raw) {
+        var id = raw.Id || raw.id;
+        if (isInQueue(id)) { toast((raw.Name||raw.name||'?')+' is already in the queue'); return; }
+        var type = (raw.Type || raw.type || '').toLowerCase();
+        queue.push({ id:id, name:raw.Name||raw.name||'?', type:type, thumbUrl:thumb(raw) });
+        saveQueue(); renderQueue(); syncAllCardButtons();
+        /* For episodes: immediately resolve the real display name from the detail endpoint */
+        if (type === 'episode') resolveEpisodeName(id);
+    }
+ 
     function removeById(id) {
         var idx=queueIndex(id);
         if(idx===-1)return;
@@ -92,7 +113,7 @@
         queue=[];currentIdx=-1;lastPlayingId=null;
         saveQueue();renderQueue();syncAllCardButtons();
     }
-
+ 
     var _toastT=null;
     function showToast(msg){toast(msg);}
     function toast(msg) {
@@ -102,7 +123,7 @@
         if(_toastT)clearTimeout(_toastT);
         _toastT=setTimeout(function(){t.classList.remove('show');},2400);
     }
-
+ 
     function syncAllCardButtons() {
         document.querySelectorAll('.jfq-card-btn[data-jfq-card-id]').forEach(function(btn){
             var id=btn.getAttribute('data-jfq-card-id'),inq=isInQueue(id);
@@ -131,7 +152,7 @@
             }
         }
     }
-
+ 
     function injectCSS() {
         if (document.getElementById(CSS_ID)) return;
         var s = document.createElement('style');
@@ -232,18 +253,14 @@
         ].join('');
         document.head.appendChild(s);
     }
-
-    /* ── Episode label: E01 only — season is clear from the active season tab ── */
+ 
+    /* ── Episode label: E01 — season is clear from the active season tab ── */
     function epNumLabel(ep) {
         var e = ep.IndexNumber;
         if (e != null) return 'E' + String(e).padStart(2, '0');
         return '?';
     }
-
-    function epDisplayName(ep) {
-        return (ep.Name && ep.Name.trim()) ? ep.Name.trim() : epNumLabel(ep);
-    }
-
+ 
     /* ── Season Panel ── */
     function loadSeasonsPanel(seriesId, panel) {
         jfetch('/Shows/'+seriesId+'/Seasons?UserId='+uid()).then(function(data) {
@@ -252,7 +269,7 @@
             renderSeasonPanel(panel,seriesId,seasons,0);
         });
     }
-
+ 
     function renderSeasonPanel(panel, seriesId, seasons, activeIdx) {
         panel.innerHTML='';
         var tabRow=document.createElement('div');tabRow.className='jfq-season-tabs';
@@ -263,19 +280,21 @@
             tabRow.appendChild(tab);
         });
         panel.appendChild(tabRow);
-
+ 
         var epList=document.createElement('div');epList.className='jfq-ep-list';
         epList.innerHTML='<div style="padding:.8em 0;color:rgba(255,255,255,.3);font-size:.8em;">Loading…</div>';
         panel.appendChild(epList);
-
+ 
         var season=seasons[activeIdx];
         var addSeasonBtn=document.createElement('button');addSeasonBtn.className='jfq-add-season-btn';
         addSeasonBtn.textContent='＋ Add all episodes of '+(season.Name||'this season');
         panel.appendChild(addSeasonBtn);
-
+ 
+        /* Episodenliste per Users-Endpoint — liefert echte Namen */
         jfetch('/Users/'+uid()+'/Items?ParentId='+season.Id
             +'&IncludeItemTypes=Episode&SortBy=IndexNumber'
-            +'&Fields=RunTimeTicks,BackdropImageTags,ImageTags,ParentBackdropItemId,ParentIndexNumber,IndexNumber,Name&Limit=200'
+            +'&Fields=Name,RunTimeTicks,BackdropImageTags,ImageTags,'
+            +'ParentBackdropItemId,ParentIndexNumber,IndexNumber,SeriesId,SeriesPrimaryImageTag&Limit=200'
         ).then(function(data){
             var eps=data&&data.Items?data.Items:[];
             epList.innerHTML='';
@@ -285,42 +304,46 @@
             }
             eps.forEach(function(ep){
                 var row=document.createElement('div');row.className='jfq-ep-row';
-
+ 
                 var num=document.createElement('span');num.className='jfq-ep-num';
-                num.textContent=epNumLabel(ep);   /* E01, E02, … — matches Jellyfin detail page within a season */
-
-                var name=document.createElement('span');name.className='jfq-ep-name';
-                name.textContent=epDisplayName(ep);
-                name.title=epDisplayName(ep);
-
+                num.textContent=epNumLabel(ep);
+ 
+                var displayName=(ep.Name&&ep.Name.trim())?ep.Name.trim():epNumLabel(ep);
+                var nameSpan=document.createElement('span');nameSpan.className='jfq-ep-name';
+                nameSpan.textContent=displayName;
+                nameSpan.title=displayName;
+ 
                 var addB=document.createElement('button');
                 addB.className='jfq-ep-add'+(isInQueue(ep.Id)?' inq':'');
-                addB.textContent=isInQueue(ep.Id)?'✓':'＋';
+                addB.textContent=isInQueue(ep.Id)?'\u2713':'\uff0b';
                 addB.setAttribute('data-jfq-ep-id',ep.Id);
-                addB.addEventListener('click',function(e){
-                    e.stopPropagation();
-                    if(isInQueue(ep.Id)){
-                        removeById(ep.Id);
-                        addB.textContent='＋';addB.className='jfq-ep-add';
-                    } else {
-                        addItem(ep);addB.textContent='✓';addB.className='jfq-ep-add inq';
-                    }
-                });
-                row.appendChild(num);row.appendChild(name);row.appendChild(addB);
+                addB.addEventListener('click',(function(epRef,btn){
+                    return function(e){
+                        e.stopPropagation();
+                        if(isInQueue(epRef.Id)){
+                            removeById(epRef.Id);
+                            btn.textContent='\uff0b';btn.className='jfq-ep-add';
+                        } else {
+                            addItem(epRef);
+                            btn.textContent='\u2713';btn.className='jfq-ep-add inq';
+                        }
+                    };
+                })(ep,addB));
+                row.appendChild(num);row.appendChild(nameSpan);row.appendChild(addB);
                 epList.appendChild(row);
             });
-
+ 
             addSeasonBtn.addEventListener('click',function(){
                 var added=0;
                 eps.forEach(function(ep){if(!isInQueue(ep.Id)){addItem(ep);added++;}});
                 toast(added+' episode'+(added!==1?'s':'')+' added');
-                addSeasonBtn.textContent='✓ '+added+' episode'+(added!==1?'s':'')+' added';
+                addSeasonBtn.textContent='\u2713 '+added+' episode'+(added!==1?'s':'')+' added';
                 addSeasonBtn.disabled=true;
-                epList.querySelectorAll('.jfq-ep-add').forEach(function(b){b.textContent='✓';b.className='jfq-ep-add inq';});
+                epList.querySelectorAll('.jfq-ep-add').forEach(function(b){b.textContent='\u2713';b.className='jfq-ep-add inq';});
             });
         });
     }
-
+ 
     /* ── Search ── */
     function doSearch(q) {
         var res=document.getElementById('jfq-results');if(!res)return;
@@ -331,7 +354,7 @@
         res.innerHTML='<div class="jfq-hint">Searching…</div>';
         jfetch('/Users/'+uid()+'/Items?SearchTerm='+encodeURIComponent(q.trim())
             +'&IncludeItemTypes=Movie,Series,Episode&Recursive=true&Limit=30'
-            +'&Fields=ProductionYear,BackdropImageTags,ImageTags,ParentBackdropItemId'
+            +'&Fields=Name,OriginalTitle,ProductionYear,BackdropImageTags,ImageTags,ParentBackdropItemId'
         ).then(function(data){
             var res2=document.getElementById('jfq-results');if(!res2)return;
             var items=data&&data.Items?data.Items:[];
@@ -396,7 +419,7 @@
             });
         });
     }
-
+ 
     /* ── Render Queue ── */
     function renderQueue() {
         var list=document.getElementById('jfq-queue-list');
@@ -451,7 +474,7 @@
         if(shBtn)shBtn.disabled=queue.length<2;
         if(clBtn)clBtn.disabled=queue.length===0;
     }
-
+ 
     /* ── Navigate ── */
     function navTo(id){
         var a=ac(),sid=a&&((a._serverInfo&&a._serverInfo.Id)||(a.serverId&&a.serverId()));
@@ -461,24 +484,24 @@
             window.location.hash='#!/details?id='+id+(sid?'&serverId='+sid:'');
         },150);
     }
-
+ 
     /* ── Overlay ── */
     var escH=function(e){if(e.key==='Escape')closeOverlay();};
     function openOverlay(){
         if(document.getElementById(OV_ID)){closeOverlay();return;}
         var ov=document.createElement('div');ov.id=OV_ID;
-
+ 
         var head=document.createElement('div');head.id='jfq-head';
         var title=document.createElement('div');title.id='jfq-title';
         title.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v-2H3v2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z"/></svg>Watch Queue';
         head.appendChild(title);
-
+ 
         var headRight=document.createElement('div');headRight.id='jfq-head-right';
-
+ 
         var shBtn=document.createElement('button');shBtn.className='jfq-hbtn';shBtn.id='jfq-shuffle-btn';
         shBtn.textContent='⇄ Shuffle';shBtn.disabled=queue.length<2;
         shBtn.addEventListener('click',shuffle);headRight.appendChild(shBtn);
-
+ 
         var clBtn=document.createElement('button');clBtn.className='jfq-hbtn danger';clBtn.id='jfq-clear-btn';
         clBtn.textContent='Clear all';clBtn.disabled=queue.length===0;
         clBtn.addEventListener('click',function(){
@@ -486,11 +509,11 @@
             if(confirm('Clear the entire queue?'))clearQueue();
         });
         headRight.appendChild(clBtn);
-
+ 
         var closeBtn=document.createElement('button');closeBtn.id='jfq-close';closeBtn.textContent='✕';
         closeBtn.addEventListener('click',closeOverlay);
         headRight.appendChild(closeBtn);head.appendChild(headRight);ov.appendChild(head);
-
+ 
         var body=document.createElement('div');body.id='jfq-body';
         var left=document.createElement('div');left.id='jfq-left';
         var sw=document.createElement('div');sw.id='jfq-search-wrap';
@@ -505,13 +528,13 @@
         var results=document.createElement('div');results.id='jfq-results';
         results.innerHTML='<div class="jfq-hint">Search for a movie, series or episode<br>to add it to your queue.</div>';
         left.appendChild(results);body.appendChild(left);
-
+ 
         var right=document.createElement('div');right.id='jfq-right';
         var qTop=document.createElement('div');qTop.id='jfq-queue-top';right.appendChild(qTop);
         var qList=document.createElement('div');qList.id='jfq-queue-list';right.appendChild(qList);
-
+ 
         var footer=document.createElement('div');footer.id='jfq-footer';
-
+ 
         var autoBtn=document.createElement('button');autoBtn.id='jfq-auto-btn';
         autoBtn.disabled=!queue.length;autoBtn.textContent='⏭ Autoplay';
         autoBtn.addEventListener('click',function(){
@@ -565,7 +588,7 @@
             }
             closeOverlay();setTimeout(goToItem,400);
         });
-
+ 
         var manBtn=document.createElement('button');manBtn.id='jfq-man-btn';
         manBtn.disabled=!queue.length;manBtn.textContent='▶ Play manually';
         manBtn.addEventListener('click',function(){
@@ -577,7 +600,7 @@
                 window.location.hash='#!/details?id='+queue[0].id+(sid?'&serverId='+sid:'');
             },150);
         });
-
+ 
         footer.appendChild(autoBtn);footer.appendChild(manBtn);
         right.appendChild(footer);body.appendChild(right);ov.appendChild(body);
         document.body.appendChild(ov);
@@ -586,13 +609,13 @@
         renderQueue();
         setTimeout(function(){var i=document.getElementById('jfq-input');if(i)i.focus();},80);
     }
-
+ 
     function closeOverlay(){
         var ov=document.getElementById(OV_ID);
         if(ov)ov.remove();
         document.removeEventListener('keydown',escH);
     }
-
+ 
     /* ── Card Buttons ── */
     function injectCardButtons() {
         document.querySelectorAll('.card[data-id]:not([data-jfq-q])').forEach(function(card){
@@ -627,6 +650,8 @@
                     btn.className='jfq-card-btn inq';
                     btn.title='Remove from queue';
                     toast(name+' added to queue');
+                    /* Resolve real display name from detail endpoint */
+                    resolveEpisodeName(id);
                 }
             });
             card.style.position='relative';
@@ -639,7 +664,7 @@
             btn.innerHTML='<span class="material-icons">'+(inq?'playlist_add_check':'playlist_add')+'</span>';
         });
     }
-
+ 
     /* ── Detail Page Button ── */
     function injectDetailButton() {
         var hash = window.location.hash || '';
@@ -677,7 +702,7 @@
         });
         btnsRow.appendChild(btn);
     }
-
+ 
     /* ── Tab patching ── */
     function patchTab(){
         document.querySelectorAll('[id^="customTabButton"],.emby-tab-button,[class*="tabButton"]').forEach(function(btn){
@@ -694,13 +719,13 @@
             },true);
         });
     }
-
+ 
     /* ── Boot ── */
     setInterval(function(){
         if(typeof ApiClient==='undefined')return;
         injectCSS();patchTab();injectCardButtons();injectDetailButton();
     },400);
-
+ 
     window.__openQueueOverlay=openOverlay;
-
+ 
 })();
