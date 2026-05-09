@@ -326,8 +326,13 @@
     renderLog(); updateBadge();
   }
 
-  const startBlocking = () => { if (!blockInterval) { enforce(); blockInterval=setInterval(enforce,15000); } };
-  const stopBlocking  = () => { clearInterval(blockInterval); blockInterval=null; };
+  const startBlocking = () => {
+    if (!blockInterval) {
+      enforce(); // sofort beim Einschalten
+      blockInterval = setInterval(enforce, 8000);
+    }
+  };
+  const stopBlocking = () => { clearInterval(blockInterval); blockInterval = null; };
 
   // ── Aktionen ─────────────────────────────────────────────────
 
