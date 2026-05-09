@@ -157,6 +157,7 @@
     #dm-grp-toggle { background:rgba(124,106,247,.12);border:1px solid rgba(124,106,247,.3);color:rgba(124,106,247,.9);border-radius:7px;padding:4px 12px;cursor:pointer;font-size:.82em;transition:all .2s; }
     #dm-grp-toggle.active { background:rgba(124,106,247,.3);border-color:rgba(124,106,247,.6);color:#fff; }
     .dm-empty { padding:3em 0;text-align:center;color:rgba(255,255,255,.18);font-size:.88em;font-style:italic; }
+    .dm-mine { font-size:.68em; color:rgba(99,179,237,.9); background:rgba(99,179,237,.1); border:1px solid rgba(99,179,237,.25); border-radius:10px; padding:2px 8px; margin-left:7px; vertical-align:middle; }
 
     /* Add-to-group dropdown */
     .dm-add-to-grp {
@@ -223,6 +224,8 @@
       const userId   = d.LastUserId   || '';
       if (!groups[k].users.includes(userName)) groups[k].users.push(userName);
       if (userId && !groups[k].userIds.includes(userId)) groups[k].userIds.push(userId);
+      // Mark as admin device if any user of this device is an admin
+      if (adminUserIds.has(userId)) groups[k].isAdminDevice = true;
 
       // Apps
       const app = [d.AppName, d.AppVersion].filter(Boolean).join(' ');
@@ -264,7 +267,9 @@
     }
 
     for (const s of sessions) {
-      if (s.UserId === myId) continue;
+      // Never block any admin user
+      if (adminUserIds.has(s.UserId)) continue;
+      if (s.UserId === myId) continue; // fallback if adminUserIds not loaded yet
       const did   = s.DeviceId || '';
       const isRej = rejectedIds.has(did);
       const isUnk = unknownIds.has(did) && Store.blockUnknown();
@@ -379,7 +384,7 @@
 
   // ── State ─────────────────────────────────────────────────────
 
-  let allDevGroups = [], liveSessions = new Set(), groupMode = false;
+  let allDevGroups = [], liveSessions = new Set(), groupMode = false, myDeviceId = '';
 
   // ── Render ────────────────────────────────────────────────────
 
@@ -469,23 +474,23 @@
       const alias   = Store.getAlias(g.key);
       const dispName= alias || g.name;
       return `
-        <div class="dm-card ${willBlk?'blk':''} ${g.status==='approved'?'ok':''}" data-key="${encodeURIComponent(g.key)}">
+        <div class="dm-card ${willBlk?'blk':''} ${effectiveStatus==='approved'?'ok':''}" data-key="${encodeURIComponent(g.key)}">
           <div class="dm-card-inner">
             <div class="dm-chk-wrap ${groupMode?'show':''}">
               <input type="checkbox" class="dm-chk" data-key="${encodeURIComponent(g.key)}">
             </div>
             <div class="dm-avatar">${g.icon}</div>
             <div class="dm-info">
-              <div class="dm-dname">${isLive?'<span class="dm-live"></span>':''}${dispName}${willBlk&&isLive?'<span class="dm-blkwarn">⛔ blocked</span>':''}</div>
+              <div class="dm-dname">${isLive?'<span class="dm-live"></span>':''}${dispName}${g.isAdminDevice?'<span class="dm-mine">👑 Admin</span>':''}${willBlk&&isLive?'<span class="dm-blkwarn">⛔ blocked</span>':''}</div>
               ${alias?'<div class="dm-orig">'+'🔤'+' '+g.name+'</div>':''}
               <div class="dm-dmeta">👤 ${g.users.join(', ')} · 🕐 ${last}</div>
               <div class="dm-apps">📦 ${g.apps.join(' · ')||'—'}</div>
             </div>
-            <span class="dm-sb ${g.status}">${btxt}</span>
+            <span class="dm-sb ${effectiveStatus}">${btxt}</span>
             <div class="dm-acts">
-              ${g.status!=='approved'?`<button class="dm-btn approve" data-a="approve">✔ Approve</button>`:''}
-              ${g.status!=='rejected'?`<button class="dm-btn reject"  data-a="reject">✕ Reject</button>`:''}
-              ${g.status!=='unknown' ?`<button class="dm-btn"         data-a="reset">↩</button>`:''}
+              ${!g.isAdminDevice && g.status!=='approved'?`<button class="dm-btn approve" data-a="approve">✔ Approve</button>`:''}
+              ${!g.isAdminDevice && g.status!=='rejected'?`<button class="dm-btn reject"  data-a="reject">✕ Reject</button>`:''}
+              ${!g.isAdminDevice && g.status!=='unknown' ?`<button class="dm-btn"         data-a="reset">↩</button>`:''}
               <button class="dm-btn rename" data-a="rename" title="Umbenennen">✏️</button>
               <button class="dm-btn" data-a="delete">🗑</button>
             </div>
@@ -806,9 +811,19 @@
     return '🖥️';
   }
 
+  async function loadAdminIds() {
+    try {
+      const users = await API.get('/Users');
+      adminUserIds = new Set(
+        (users || []).filter(u => u.Policy?.IsAdministrator).map(u => u.Id)
+      );
+    } catch { /* ignore — fallback to only skipping current user */ }
+  }
+
   async function init() {
     try { if (!(await API.get('/Users/Me'))?.Policy?.IsAdministrator) return; } catch { return; }
     injectCSS();
+    await loadAdminIds(); // load all admin IDs before blocking starts
     if (Store.blocking()) startBlocking();
     let tries=0;
     const t=setInterval(()=>{ if(addSidebarButton()||++tries>40){ clearInterval(t); loadDeviceGroups().then(g=>{ allDevGroups=g; updateBadge(); }); } }, 500);
