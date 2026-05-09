@@ -1,6 +1,6 @@
 /**
- * JELLYFIN DEVICE MANAGER – Gruppieren + Umbenennen
- * Admin-Dashboard → Allgemein → Benutzerdefiniertes JavaScript
+ * JELLYFIN DEVICE MANAGER – Group + Rename
+ * Admin Dashboard → General → Custom JavaScript
  */
 (function () {
   'use strict';
@@ -16,7 +16,7 @@
     _k: 'dm_v7',
     _d() { try { return JSON.parse(localStorage.getItem(this._k)||'{}'); } catch { return {}; } },
     _s(d) { localStorage.setItem(this._k, JSON.stringify(d)); },
-    key:              (name, user) => `${name}||${user}`,
+    key:              (deviceId) => deviceId,  // Schlüssel = DeviceId, unabhängig vom User
     setStatus(k,v)    { const d=this._d(); (d.s=d.s||{})[k]=v; this._s(d); },
     getStatus(k)      { return this._d().s?.[k] || 'unknown'; },
     setAlias(k,v)     { const d=this._d(); (d.a=d.a||{})[k]=v.trim(); this._s(d); },
@@ -196,16 +196,47 @@
     const data  = await API.get('/Devices?userId=');
     const items = data.Items || [];
     const groups = {};
+
     for (const d of items) {
-      const k = Store.key(d.Name||'Unbekannt', d.LastUserName||'—');
-      if (!groups[k]) groups[k] = { key:k, name:d.Name||'Unbekanntes Gerät', user:d.LastUserName||'—', userId:d.LastUserId||'', icon:getIcon(d.Name||''), ids:[], apps:[], lastSeen:null, status:Store.getStatus(k) };
-      groups[k].ids.push(d.Id);
+      // Gruppierung nach DeviceId — unabhängig vom Benutzer
+      // Mehrere User auf demselben Gerät = ein Eintrag
+      const deviceId = d.Id;
+      const k = Store.key(deviceId);
+
+      if (!groups[k]) {
+        groups[k] = {
+          key:      k,
+          deviceId: deviceId,
+          name:     d.Name || 'Unknown Device',
+          users:    [],     // alle User die dieses Gerät nutzen
+          userIds:  [],     // für Server-Status setzen
+          icon:     getIcon(d.Name || ''),
+          ids:      [deviceId],  // DeviceIds (hier gleich dem key)
+          apps:     [],
+          lastSeen: null,
+          status:   Store.getStatus(k),
+        };
+      }
+
+      // Benutzer hinzufügen falls noch nicht vorhanden
+      const userName = d.LastUserName || '—';
+      const userId   = d.LastUserId   || '';
+      if (!groups[k].users.includes(userName)) groups[k].users.push(userName);
+      if (userId && !groups[k].userIds.includes(userId)) groups[k].userIds.push(userId);
+
+      // Apps
       const app = [d.AppName, d.AppVersion].filter(Boolean).join(' ');
       if (app && !groups[k].apps.includes(app)) groups[k].apps.push(app);
+
+      // Letzter Zugriff
       const t = d.DateLastActivity ? new Date(d.DateLastActivity) : null;
       if (t && (!groups[k].lastSeen || t > groups[k].lastSeen)) groups[k].lastSeen = t;
     }
-    return Object.values(groups).sort((a,b) => ({unknown:0,rejected:1,approved:2}[a.status]??0) - ({unknown:0,rejected:1,approved:2}[b.status]??0));
+
+    return Object.values(groups).sort((a,b) =>
+      ({unknown:0,rejected:1,approved:2}[a.status]??0) -
+      ({unknown:0,rejected:1,approved:2}[b.status]??0)
+    );
   }
 
   async function loadLive() {
@@ -227,9 +258,9 @@
     const rejectedIds = new Set();
     const unknownIds  = new Set();
     for (const g of allDevGroups) {
-      const st = Store.getStatus(g.key);
-      if (st === 'rejected') g.ids.forEach(id => rejectedIds.add(id));
-      if (st === 'unknown')  g.ids.forEach(id => unknownIds.add(id));
+      const st = Store.getStatus(g.key); // key = deviceId
+      if (st === 'rejected') rejectedIds.add(g.deviceId);
+      if (st === 'unknown')  unknownIds.add(g.deviceId);
     }
 
     for (const s of sessions) {
@@ -240,8 +271,8 @@
       if (!isRej && !isUnk) continue;
 
       const text = isRej
-        ? 'Dieses Gerät wurde vom Administrator gesperrt.'
-        : 'Dieses Gerät ist noch nicht freigegeben. Bitte wende dich an den Administrator.';
+        ? 'This device has been blocked by the administrator.'
+        : 'This device is not yet approved. Please contact the administrator.';
 
       try {
         // 1. Nachricht senden
@@ -308,19 +339,21 @@
     switch(action) {
       case 'approve':
         Store.setStatus(group.key,'approved');
-        await setServerStatus(group.userId, 'approved');  // Server-seitig speichern
+        // Für ALLE User dieses Geräts freigeben
+        await Promise.all((group.userIds||[]).map(uid => setServerStatus(uid, 'approved')));
         break;
       case 'reject':
         Store.setStatus(group.key,'rejected');
-        await setServerStatus(group.userId, 'rejected');  // Server-seitig speichern
+        // Für ALLE User dieses Geräts sperren
+        await Promise.all((group.userIds||[]).map(uid => setServerStatus(uid, 'rejected')));
         await kickGroup(group);
         break;
       case 'reset':
         Store.setStatus(group.key,'unknown');
-        await setServerStatus(group.userId, 'pending');   // Server-seitig → wartet auf Freigabe
+        await Promise.all((group.userIds||[]).map(uid => setServerStatus(uid, 'pending')));
         break;
       case 'delete':
-        if (!confirm(`Alle Einträge für „${Store.getAlias(group.key)||group.name}" löschen?`)) return;
+        if (!confirm(`Delete all entries for "${Store.getAlias(group.key)||group.name}"?`)) return;
         await Promise.all(group.ids.map(id=>API.delete(`/Devices?id=${id}`)));
         break;
     }
@@ -334,7 +367,7 @@
         try {
           await API.post(`/Sessions/${s.Id}/Message`, {
             Header: 'Zugang verweigert',
-            Text:   'Dieses Gerät wurde vom Administrator gesperrt.',
+            Text:   'This device has been blocked by the administrator.',
             TimeoutMs: 10000,
           });
         } catch { /* ignore */ }
@@ -375,15 +408,15 @@
           </div>
           <span>📦</span>
           <strong>${gAlias}</strong>
-          <span class="dm-grp-info">${members.length} Geräte${isLiveAny?' · <span class="dm-live"></span>online':''}</span>
+          <span class="dm-grp-info">${members.length} Geräte${isLiveAny?' · <span class="dm-live"></span>' + 'online':''}</span>
           <div class="dm-grp-actions">
-            <button class="dm-grp-btn" data-ga="rename-grp">✏️ Umbenennen</button>
-            <button class="dm-grp-btn danger" data-ga="ungroup">↩ Entgruppieren</button>
+            <button class="dm-grp-btn" data-ga="rename-grp">✏️ Rename</button>
+            <button class="dm-grp-btn danger" data-ga="ungroup">↩ Ungroup</button>
           </div>
         </div>
         <div class="dm-grp-rename-row" id="grn-${gid}">
-          <input class="dm-rename-input" placeholder="Gruppenname…" value="${gAlias}">
-          <button class="dm-rn-ok">✔ Speichern</button>
+          <input class="dm-rename-input" placeholder="Group name…" value="${gAlias}">
+          <button class="dm-rn-ok">✔ Save</button>
         </div>
         <div class="dm-grp-children">`;
 
@@ -391,28 +424,29 @@
         const alias = Store.getAlias(g.key);
         const dispName = alias || g.name;
         const last = g.lastSeen ? g.lastSeen.toLocaleString('de-DE') : '—';
-        const btxt = {unknown:'⚠ Unbekannt',approved:'✓ Bestätigt',rejected:'✕ Abgelehnt'}[g.status];
+        const btxt = {unknown:'⚠ Unknown',approved:'✓ Approved',rejected:'✕ Rejected'}[g.status];
         const isLive = g.ids.some(id=>liveSessions.has(id));
         html += `<div class="dm-grp-child" data-key="${encodeURIComponent(g.key)}">
           <div class="dm-avatar" style="width:32px;height:32px;font-size:14px">${g.icon}</div>
           <div class="dm-info">
             <div class="dm-dname" style="font-size:.85em">${isLive?'<span class="dm-live"></span>':''}${dispName}</div>
-            ${alias?`<div class="dm-orig">🔤 ${g.name}</div>`:''}
-            <div class="dm-dmeta">👤 ${g.user} · 🕐 ${last}</div>
+            ${alias?'<div class="dm-orig">'+'🔤'+' '+g.name+'</div>':''}
+            <div class="dm-dmeta">👤 ${g.users.join(', ')} · 🕐 ${last}</div>
           </div>
           <span class="dm-sb ${g.status}" style="font-size:.68em">${btxt}</span>
           <div class="dm-acts">
-            ${g.status!=='approved'?`<button class="dm-btn approve" data-a="approve">✔</button>`:''}
+            ${g.status!=='approved'?'<button class="dm-btn approve" data-a="approve">✔</button>':''}
+
             ${g.status!=='rejected'?`<button class="dm-btn reject"  data-a="reject">✕</button>`:''}
             ${g.status!=='unknown' ?`<button class="dm-btn"         data-a="reset">↩</button>`:''}
             <button class="dm-btn rename" data-a="rename-child" title="Umbenennen">✏️</button>
-            <button class="dm-grp-btn danger" data-ga="remove-from-grp" data-gid="${gid}" data-key="${g.key}" title="Aus Gruppe entfernen" style="font-size:.72em;padding:3px 7px">✕</button>
+            <button class="dm-grp-btn danger" data-ga="remove-from-grp" data-gid="${gid}" data-key="${g.key}" title="Remove from group" style="font-size:.72em;padding:3px 7px">✕</button>
           </div>
         </div>
         <div class="dm-rename-row" id="rn-${encodeURIComponent(g.key)}">
-          <input class="dm-rename-input" placeholder="Eigener Name…" value="${alias}">
-          <button class="dm-rn-ok">✔ Speichern</button>
-          ${alias?`<button class="dm-rn-del">✕ Zurücksetzen</button>`:''}
+          <input class="dm-rename-input" placeholder="Custom name…" value="${alias}">
+          <button class="dm-rn-ok">✔ Save</button>
+          ${alias?'<button class="dm-rn-del">'+'✕ Reset'+'</button>':''}
         </div>`;
       });
       html += `</div></div>`;
@@ -423,13 +457,13 @@
       ? allDevGroups.filter(g=>!usedKeys.has(g.key))
       : allDevGroups.filter(g=>!usedKeys.has(g.key) && g.status===filter);
 
-    if (cnt) cnt.textContent = `${Object.keys(customGroups).length + visible.length} Einträge`;
+    if (cnt) cnt.textContent = `${Object.keys(customGroups).length + visible.length} entries`;
 
     html += visible.map(g => {
       const isLive  = g.ids.some(id=>liveSessions.has(id));
       const willBlk = blocking&&(g.status==='rejected'||(g.status==='unknown'&&blkUnk));
       const last    = g.lastSeen ? g.lastSeen.toLocaleString('de-DE') : '—';
-      const btxt    = {unknown:'⚠ Unbekannt',approved:'✓ Bestätigt',rejected:'✕ Abgelehnt'}[g.status];
+      const btxt    = {unknown:'⚠ Unknown',approved:'✓ Approved',rejected:'✕ Rejected'}[g.status];
       const alias   = Store.getAlias(g.key);
       const dispName= alias || g.name;
       return `
@@ -440,24 +474,24 @@
             </div>
             <div class="dm-avatar">${g.icon}</div>
             <div class="dm-info">
-              <div class="dm-dname">${isLive?'<span class="dm-live"></span>':''}${dispName}${willBlk&&isLive?'<span class="dm-blkwarn">⛔ geblockt</span>':''}</div>
-              ${alias?`<div class="dm-orig">🔤 ${g.name}</div>`:''}
-              <div class="dm-dmeta">👤 ${g.user} · 🕐 ${last}</div>
-              <div class="dm-apps">📦 ${g.apps.join(' · ')||'—'} (${g.ids.length})</div>
+              <div class="dm-dname">${isLive?'<span class="dm-live"></span>':''}${dispName}${willBlk&&isLive?'<span class="dm-blkwarn">⛔ blocked</span>':''}</div>
+              ${alias?'<div class="dm-orig">'+'🔤'+' '+g.name+'</div>':''}
+              <div class="dm-dmeta">👤 ${g.users.join(', ')} · 🕐 ${last}</div>
+              <div class="dm-apps">📦 ${g.apps.join(' · ')||'—'}</div>
             </div>
             <span class="dm-sb ${g.status}">${btxt}</span>
             <div class="dm-acts">
-              ${g.status!=='approved'?`<button class="dm-btn approve" data-a="approve">✔ Bestätigen</button>`:''}
-              ${g.status!=='rejected'?`<button class="dm-btn reject"  data-a="reject">✕ Ablehnen</button>`:''}
+              ${g.status!=='approved'?`<button class="dm-btn approve" data-a="approve">✔ Approve</button>`:''}
+              ${g.status!=='rejected'?`<button class="dm-btn reject"  data-a="reject">✕ Reject</button>`:''}
               ${g.status!=='unknown' ?`<button class="dm-btn"         data-a="reset">↩</button>`:''}
               <button class="dm-btn rename" data-a="rename" title="Umbenennen">✏️</button>
               <button class="dm-btn" data-a="delete">🗑</button>
             </div>
           </div>
           <div class="dm-rename-row" id="rn-${encodeURIComponent(g.key)}">
-            <input class="dm-rename-input" placeholder="Eigener Name…" value="${alias}">
-            <button class="dm-rn-ok">✔ Speichern</button>
-            ${alias?`<button class="dm-rn-del">✕ Zurücksetzen</button>`:''}
+            <input class="dm-rename-input" placeholder="Custom name…" value="${alias}">
+            <button class="dm-rn-ok">✔ Save</button>
+            ${alias?'<button class="dm-rn-del">'+'✕ Reset'+'</button>':''}
           </div>
         </div>`;
     }).join('');
@@ -477,7 +511,7 @@
       const card = btn.closest('[data-gid]');
       const gid  = card.dataset.gid;
       if (btn.dataset.ga === 'ungroup') {
-        if (!confirm('Gruppe auflösen? Geräte werden wieder einzeln angezeigt.')) return;
+        if (!confirm('Dissolve group? Devices will appear individually again.')) return;
         Store.delGroup(gid);
         renderAll(document.querySelector('.dm-tab.active')?.dataset.f||'all');
       }
@@ -583,16 +617,16 @@
       const inp  = document.getElementById('dm-grp-name');
       const save = document.getElementById('dm-grp-save');
 
-      if (cnt) cnt.textContent = `${total} ausgewählt`;
+      if (cnt) cnt.textContent = `${total} selected`;
 
       // Wenn eine Gruppe + mind. 1 Gerät: "Zu Gruppe hinzufügen"
       // Wenn nur Geräte: "Neue Gruppe erstellen" (braucht Namen)
       if (grpSel === 1 && devSel >= 1) {
         if (inp)  { inp.style.display = 'none'; }
-        if (save) { save.textContent = '📦 Zu Gruppe hinzufügen'; }
+        if (save) { save.textContent = '📦 Add to Group'; }
       } else {
         if (inp)  { inp.style.display = ''; }
-        if (save) { save.textContent = '✔ Gruppe erstellen'; }
+        if (save) { save.textContent = '✔ Create Group'; }
       }
 
       if (bar) bar.classList.toggle('open', total >= 1);
@@ -604,12 +638,12 @@
     if (!el) return;
     el.innerHTML = blockLog.length
       ? blockLog.map(e=>`<div class="dm-le"><div class="dm-le-t">${e.time}</div><div class="dm-le-u">🚫 ${e.user}</div><div class="dm-le-d">${e.device}</div></div>`).join('')
-      : `<div class="dm-le-empty">Noch leer.</div>`;
+      : `<div class="dm-le-empty">Nothing yet.</div>`;
   }
 
   async function refresh() {
     const list = document.getElementById('dm-list');
-    if (list) list.innerHTML = `<div class="dm-empty" style="opacity:.4">⏳ Lade…</div>`;
+    if (list) list.innerHTML = `<div class="dm-empty" style="opacity:.4">⏳ Loading…</div>`;
     [allDevGroups, liveSessions] = await Promise.all([loadDeviceGroups(), loadLive()]);
     renderAll(document.querySelector('.dm-tab.active')?.dataset.f||'all');
     updateBadge();
@@ -631,12 +665,12 @@
     const el = document.createElement('div'); el.id='dm-overlay';
     el.innerHTML = `
       <div id="dm-header">
-        <div id="dm-title">${ICON_DEVICE} Geräteverwaltung</div>
+        <div id="dm-title">${ICON_DEVICE} Device Manager</div>
         <div id="dm-tabs">
-          <button class="dm-tab active" data-f="all">Alle</button>
-          <button class="dm-tab" data-f="unknown">⚠ Unbekannt</button>
-          <button class="dm-tab" data-f="approved">✓ Bestätigt</button>
-          <button class="dm-tab" data-f="rejected">✕ Abgelehnt</button>
+          <button class="dm-tab active" data-f="all">All</button>
+          <button class="dm-tab" data-f="unknown">⚠ Unknown</button>
+          <button class="dm-tab" data-f="approved">✓ Approved</button>
+          <button class="dm-tab" data-f="rejected">✕ Rejected</button>
         </div>
         <button id="dm-close">✕</button>
       </div>
@@ -644,30 +678,30 @@
         <span class="dm-pulse" id="dm-dot"></span>
         <label class="dm-tgl-wrap">
           <label class="dm-tgl"><input type="checkbox" id="dm-tb"><span class="dm-slid"></span></label>
-          Auto-Blockierung
+          Auto-Block
         </label>
         <label class="dm-tgl-wrap" id="dm-uw" style="opacity:.4;pointer-events:none">
           <label class="dm-tgl"><input type="checkbox" id="dm-tu"><span class="dm-slid"></span></label>
-          Unbekannte sperren
+          Block unknown
         </label>
-        <span style="margin-left:auto;font-size:.78em;opacity:.3">alle 8 Sek.</span>
+        <span style="margin-left:auto;font-size:.78em;opacity:.3">every 8 sec.</span>
       </div>
       <div id="dm-grp-bar">
         <span>📦</span>
-        <span id="dm-grp-count">0 ausgewählt</span>
-        <input id="dm-grp-name" placeholder="Gruppenname eingeben…" maxlength="40">
-        <button id="dm-grp-save">✔ Gruppe erstellen</button>
-        <button id="dm-grp-cancel">Abbrechen</button>
+        <span id="dm-grp-count">0 selected</span>
+        <input id="dm-grp-name" placeholder='Enter group name…' maxlength="40">
+        <button id="dm-grp-save">✔ Create Group</button>
+        <button id="dm-grp-cancel">Cancel</button>
       </div>
       <div id="dm-body">
-        <div id="dm-list"><div class="dm-empty" style="opacity:.4">⏳ Lade…</div></div>
-        <div id="dm-log"><h4>🛡 Blockier-Log</h4><div id="dm-log-entries"><div class="dm-le-empty">Noch leer.</div></div></div>
+        <div id="dm-list"><div class="dm-empty" style="opacity:.4">⏳ Loading…</div></div>
+        <div id="dm-log"><h4>🛡 Block Log</h4><div id="dm-log-entries"><div class="dm-le-empty">Nothing yet.</div></div></div>
       </div>
       <div id="dm-footer">
         <span id="dm-count"></span>
         <div style="display:flex;gap:8px">
-          <button id="dm-grp-toggle">📦 Gruppieren</button>
-          <button id="dm-reload">🔄 Aktualisieren</button>
+          <button id="dm-grp-toggle">📦 Group</button>
+          <button id="dm-reload">🔄 Refresh</button>
         </div>
       </div>`;
     document.body.appendChild(el);
@@ -704,7 +738,7 @@
     grpToggle.addEventListener('click', ()=>{
       groupMode = !groupMode;
       grpToggle.classList.toggle('active', groupMode);
-      grpToggle.textContent = groupMode ? '✕ Fertig' : '📦 Gruppieren';
+      grpToggle.textContent = groupMode ? '✕ Done' : '📦 Group';
       if (!groupMode) { grpBar.classList.remove('open'); grpName.value=''; }
       renderAll(document.querySelector('.dm-tab.active')?.dataset.f||'all');
     });
@@ -730,7 +764,7 @@
         Store.saveGroup('g_'+Date.now(), name, allKeys);
       }
 
-      groupMode=false; grpToggle.classList.remove('active'); grpToggle.textContent='📦 Gruppieren';
+      groupMode=false; grpToggle.classList.remove('active'); grpToggle.textContent='📦 Group';
       grpBar.classList.remove('open'); grpName.value=''; grpName.style.display='';
       renderAll(document.querySelector('.dm-tab.active')?.dataset.f||'all');
     });
@@ -739,7 +773,7 @@
     grpCancel.addEventListener('click', ()=>{
       el.querySelectorAll('.dm-chk').forEach(cb=>{ cb.checked=false; cb.closest('.dm-card, .dm-grp-card')?.classList.remove('sel'); });
       grpBar.classList.remove('open'); grpName.value=''; grpName.style.display='';
-      if (grpSave) grpSave.textContent='✔ Gruppe erstellen';
+      if (grpSave) grpSave.textContent='✔ Create Group';
     });
   }
 
@@ -757,7 +791,7 @@
     if (!container) return false;
     const btn = document.createElement('button'); btn.id='dm-sidebar-btn';
     if (existing) btn.className=existing.className;
-    btn.innerHTML=`${ICON_DEVICE}<span class="dm-label">Geräteverwaltung</span><span id="dm-badge"></span>`;
+    btn.innerHTML=`${ICON_DEVICE}<span class="dm-label">Device Manager</span><span id="dm-badge"></span>`;
     btn.onclick=openDM; container.appendChild(btn); return true;
   }
 
@@ -893,7 +927,7 @@
       if (me?.Policy?.IsAdministrator) return; // Admins nie
     } catch { return; }
 
-    // Status vom Server lesen
+    // Status vom Server lesen (per userId — wird vom Admin pro User gesetzt)
     const status = await getMyStatus(userId, token);
 
     if (status === 'approved') {
