@@ -11,35 +11,31 @@
   'use strict';
 
   var CACHE_KEY    = 'jfrank_v2';
-  var API_KEY      = 'DEIN_API_KEY_HIER';   /* ← Jellyfin Dashboard → API-Keys → ➕ */
-  var TTL_FILM     = 6  * 30 * 24 * 3600000; /* 6 Monate */
-  var TTL_SERIES   = 3  * 30 * 24 * 3600000; /* 3 Monate */
-  var DELTA_WINDOW = 24 * 3600000;            /* 24 Stunden */
+  var API_KEY      = '104c958c9fe149cf881d7841e986a5fe';
+  var TTL_FILM     = 6  * 30 * 24 * 3600000;
+  var TTL_SERIES   = 3  * 30 * 24 * 3600000;
+  var DELTA_WINDOW = 24 * 3600000;
 
   var COLORS = ['#7c6af7','#00a4dc','#e8871a','#4caf50','#f44336',
                 '#e91e63','#00bcd4','#ff9800','#9c27b0','#607d8b'];
 
-  /* ── TAB ICON (Trophäe, identisch Calendar-Stil) ── */
   var TAB_ICON = '<span class="jf-tab-icon"><svg viewBox="0 0 24 24" width="24" height="24">'
     + '<path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94'
     + '.63 1.5 1.98 2.63 3.61 2.96V17H7v2h10v-2h-4v-1.1c1.63-.33 2.98-1.46 3.61-2.96'
     + 'C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8z'
     + 'm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z" fill="currentColor"/></svg></span>';
 
-  /* ── CSS ── */
   function injectCSS() {
     if (document.getElementById('jfrank-css')) return;
     var s = document.createElement('style');
     s.id = 'jfrank-css';
     s.textContent = [
-      /* Vollbild-Overlay wie Calendar */
       '#jfrank-ov{position:fixed;inset:0;z-index:99999;',
         'background:rgba(0,0,0,.55);backdrop-filter:blur(24px) saturate(1.4);',
         '-webkit-backdrop-filter:blur(24px) saturate(1.4);',
         'display:flex;flex-direction:column;overflow:hidden;',
         'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}',
 
-      /* Header */
       '#jfrank-head{display:flex;align-items:center;justify-content:space-between;',
         'padding:14px 3.5%;border-bottom:1px solid rgba(255,255,255,.12);',
         'flex-shrink:0;background:rgba(0,0,0,.2);}',
@@ -53,10 +49,8 @@
         'transition:background .2s;}',
       '#jfrank-close:hover{background:rgba(255,255,255,.22);color:#fff;}',
 
-      /* Body: zwei Spalten */
       '#jfrank-body{flex:1;overflow:hidden;display:flex;padding:0 3.5%;}',
 
-      /* Spalte */
       '.jfr-col{flex:1;display:flex;flex-direction:column;min-width:0;',
         'padding:28px 16px 3em;overflow-y:auto;',
         'scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent;}',
@@ -64,10 +58,8 @@
       '.jfr-col::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:2px;}',
       '.jfr-col+.jfr-col{border-left:1px solid rgba(255,255,255,.08);}',
 
-      /* Spalten-Header */
       '.jfr-col-head{display:flex;align-items:center;gap:6px;margin-bottom:16px;justify-content:space-between;}',
 
-      /* Period Badge — gut lesbar */
       '.jfr-period{font-size:10px;color:rgba(255,255,255,.75);',
         'border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.12);',
         'border-radius:999px;padding:3px 10px;white-space:nowrap;margin-left:auto;',
@@ -77,22 +69,18 @@
       '.jfr-col-label{font-size:.68em;font-weight:600;letter-spacing:.1em;',
         'text-transform:uppercase;color:rgba(255,255,255,.3);}',
 
-      /* Zeile */
       '.jfr-row{display:flex;align-items:center;gap:10px;padding:8px 0;',
         'border-bottom:1px solid rgba(255,255,255,.04);transition:background .12s;}',
       '.jfr-row:last-child{border-bottom:none;}',
 
-      /* Rang */
       '.jfr-rank{width:24px;text-align:center;font-size:14px;flex-shrink:0;line-height:1;}',
       '.jfr-rank.n{font-size:12px;font-weight:500;color:rgba(255,255,255,.2);}',
 
-      /* Avatar */
       '.jfr-av{width:36px;height:36px;border-radius:50%;flex-shrink:0;overflow:hidden;',
         'position:relative;display:flex;align-items:center;justify-content:center;',
         'font-size:12px;font-weight:600;color:#fff;}',
       '.jfr-av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}',
 
-      /* Info */
       '.jfr-info{flex:1;min-width:0;}',
       '.jfr-name{font-size:13px;font-weight:500;color:rgba(255,255,255,.9);',
         'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
@@ -100,29 +88,22 @@
       '.jfr-bar{height:3px;background:rgba(255,255,255,.07);border-radius:2px;margin-top:5px;}',
       '.jfr-bar-fill{height:3px;border-radius:2px;transition:width .4s ease;}',
 
-      /* Zeit */
       '.jfr-time{font-size:12px;font-weight:500;color:rgba(255,255,255,.55);',
         'white-space:nowrap;flex-shrink:0;text-align:right;min-width:38px;}',
 
-      /* Divider nach Top-3 */
       '.jfr-divider{height:1px;background:rgba(255,255,255,.06);margin:4px 0 8px;}',
 
-      /* Loading / Empty */
       '.jfr-spin{padding:3em;text-align:center;color:rgba(255,255,255,.3);font-size:.9em;}',
       '.jfr-empty{padding:2em 0;color:rgba(255,255,255,.2);font-size:.85em;font-style:italic;}',
     ].join('');
     document.head.appendChild(s);
   }
 
-  /* ── API ── */
   function ac() { return window.ApiClient; }
   function srv() { var a=ac(); return a?(a._serverAddress||a._serverUrl||'').replace(/\/$/,''):''; }
 
-  /* Immer API_KEY verwenden → alle User haben Admin-Sicht */
   function jfetch(path) {
-    return fetch(srv() + path, {
-      headers: { 'X-Emby-Token': API_KEY }
-    })
+    return fetch(srv() + path, { headers: { 'X-Emby-Token': API_KEY } })
       .then(function(r){ return r.ok ? r.json() : null; })
       .catch(function(){ return null; });
   }
@@ -133,7 +114,6 @@
     return p.length>1?(p[0][0]+p[p.length-1][0]).toUpperCase():n.substring(0,2).toUpperCase();
   }
 
-  /* ── Cache ── */
   function loadCache() {
     try { var r=localStorage.getItem(CACHE_KEY); return r?JSON.parse(r):null; }
     catch(e){ return null; }
@@ -145,18 +125,15 @@
     return { filmData:{}, seriesData:{}, filmReset:Date.now(), seriesReset:Date.now(), lastDelta:0 };
   }
 
-  /* ── Ticks → Stunden ── */
   function ticksToH(t) { return t / 36000000000; }
 
-  /* ── Prüft ob die User-Liste im Cache mit der aktuellen übereinstimmt ── */
   function usersChanged(cachedUsers, liveUsers) {
     if (!cachedUsers || cachedUsers.length !== liveUsers.length) return true;
-    var cachedIds = cachedUsers.map(function(u){ return u.Id; }).sort().join(',');
-    var liveIds   = liveUsers.map(function(u){ return u.Id; }).sort().join(',');
-    return cachedIds !== liveIds;
+    var cachedSig = cachedUsers.map(function(u){ return u.Id+'|'+(u.Name||''); }).sort().join(',');
+    var liveSig   = liveUsers.map(function(u){ return u.Id+'|'+(u.Name||''); }).sort().join(',');
+    return cachedSig !== liveSig;
   }
 
-  /* ── Letzte 24h für einen User und Typ laden ── */
   function fetchDelta(userId, type, sinceIso) {
     var url = '/Users/'+userId+'/Items'
       + '?IncludeItemTypes='+type
@@ -169,7 +146,6 @@
     return jfetch(url).then(function(d){ return d&&d.Items?d.Items:[]; });
   }
 
-  /* ── Vollständige Daten für einen User und Typ ── */
   function fetchFull(userId, type, limit) {
     var url = '/Users/'+userId+'/Items'
       + '?IncludeItemTypes='+type
@@ -180,21 +156,18 @@
     return jfetch(url).then(function(d){ return d&&d.Items?d.Items:[]; });
   }
 
-  /* ── Ranking aktualisieren ── */
   function updateRanking(forceCache) {
     var cache = forceCache || loadCache() || freshCache();
     var now   = Date.now();
 
-    /* TTL-Check: Cache komplett zurücksetzen wenn abgelaufen */
-    var filmExpired   = (now - cache.filmReset)   > TTL_FILM;
-    var seriesExpired = (now - cache.seriesReset)  > TTL_SERIES;
+    var filmExpired   = (now - cache.filmReset)  > TTL_FILM;
+    var seriesExpired = (now - cache.seriesReset) > TTL_SERIES;
     if (filmExpired)   { cache.filmData   = {}; cache.filmReset   = now; }
-    if (seriesExpired) { cache.seriesData = {}; cache.seriesReset  = now; }
+    if (seriesExpired) { cache.seriesData = {}; cache.seriesReset = now; }
 
-    /* Delta: seit wann nachladen? */
-    var since = new Date(Math.max(0, cache.lastDelta || 0));
+    var since    = new Date(Math.max(0, cache.lastDelta || 0));
     var sinceIso = since.toISOString();
-    var isDelta = cache.lastDelta > 0 && !filmExpired && !seriesExpired;
+    var isDelta  = cache.lastDelta > 0 && !filmExpired && !seriesExpired;
 
     return jfetch('/Users').then(function(users) {
       if (!Array.isArray(users)) users = [];
@@ -202,37 +175,37 @@
       var promises = users.map(function(user) {
         var uid2 = user.Id;
 
-        var filmP = (isDelta
-          ? fetchDelta(uid2, 'Movie', sinceIso)
-          : fetchFull(uid2, 'Movie', 500)
-        ).then(function(items) {
-          if (!cache.filmData[uid2]) cache.filmData[uid2] = { count:0, hours:0 };
-          if (isDelta) {
-            items.forEach(function(it) {
-              cache.filmData[uid2].count++;
-              cache.filmData[uid2].hours += ticksToH(it.RunTimeTicks||0);
-            });
-          } else {
-            var totalH = items.reduce(function(s,it){ return s+ticksToH(it.RunTimeTicks||0); },0);
-            cache.filmData[uid2] = { count: items.length, hours: totalH };
-          }
-        }).catch(function(){});
+        var filmP = (isDelta ? fetchDelta(uid2,'Movie',sinceIso) : fetchFull(uid2,'Movie',500))
+          .then(function(items) {
+            if (!cache.filmData[uid2]) cache.filmData[uid2] = { count:0, hours:0 };
+            if (isDelta) {
+              items.forEach(function(it) {
+                cache.filmData[uid2].count++;
+                cache.filmData[uid2].hours += ticksToH(it.RunTimeTicks||0);
+              });
+            } else {
+              cache.filmData[uid2] = {
+                count: items.length,
+                hours: items.reduce(function(s,it){ return s+ticksToH(it.RunTimeTicks||0); },0)
+              };
+            }
+          }).catch(function(){});
 
-        var serP = (isDelta
-          ? fetchDelta(uid2, 'Episode', sinceIso)
-          : fetchFull(uid2, 'Episode', 2000)
-        ).then(function(items) {
-          if (!cache.seriesData[uid2]) cache.seriesData[uid2] = { count:0, hours:0 };
-          if (isDelta) {
-            items.forEach(function(it) {
-              cache.seriesData[uid2].count++;
-              cache.seriesData[uid2].hours += ticksToH(it.RunTimeTicks||0);
-            });
-          } else {
-            var totalH = items.reduce(function(s,it){ return s+ticksToH(it.RunTimeTicks||0); },0);
-            cache.seriesData[uid2] = { count: items.length, hours: totalH };
-          }
-        }).catch(function(){});
+        var serP = (isDelta ? fetchDelta(uid2,'Episode',sinceIso) : fetchFull(uid2,'Episode',2000))
+          .then(function(items) {
+            if (!cache.seriesData[uid2]) cache.seriesData[uid2] = { count:0, hours:0 };
+            if (isDelta) {
+              items.forEach(function(it) {
+                cache.seriesData[uid2].count++;
+                cache.seriesData[uid2].hours += ticksToH(it.RunTimeTicks||0);
+              });
+            } else {
+              cache.seriesData[uid2] = {
+                count: items.length,
+                hours: items.reduce(function(s,it){ return s+ticksToH(it.RunTimeTicks||0); },0)
+              };
+            }
+          }).catch(function(){});
 
         return Promise.all([filmP, serP]);
       });
@@ -246,7 +219,6 @@
     });
   }
 
-  /* ── Render ── */
   var medals = ['🥇','🥈','🥉'];
 
   function buildAvatar(user, color) {
@@ -255,9 +227,9 @@
     wrap.style.background = color;
     wrap.textContent = ini(user.Name);
     var img = document.createElement('img');
-    img.src = srv()+'/Users/'+user.Id+'/Images/Primary?maxHeight=72&quality=85';
+    img.src = srv()+'/Users/'+user.Id+'/Images/Primary?maxHeight=72&quality=85&_='+Date.now();
     img.onerror = function(){ img.remove(); };
-    img.onload = function(){ wrap.textContent=''; wrap.appendChild(img); };
+    img.onload  = function(){ wrap.textContent=''; wrap.appendChild(img); };
     wrap.appendChild(img);
     return wrap;
   }
@@ -304,9 +276,8 @@
 
   function renderFromCache(cache) {
     if (!cache || !cache.users) return;
-    var users = cache.users;
     var filmEntries = [], seriesEntries = [];
-    users.forEach(function(user, idx) {
+    cache.users.forEach(function(user, idx) {
       var color = COLORS[idx % COLORS.length];
       var fd = cache.filmData[user.Id]   || { count:0, hours:0 };
       var sd = cache.seriesData[user.Id] || { count:0, hours:0 };
@@ -315,7 +286,7 @@
     });
     filmEntries.sort(function(a,b){ return b.hours-a.hours; });
     seriesEntries.sort(function(a,b){ return b.hours-a.hours; });
-    renderCol('jfrank-films', filmEntries, 'movies');
+    renderCol('jfrank-films',  filmEntries,   'movies');
     renderCol('jfrank-series', seriesEntries, 'episodes');
   }
 
@@ -324,7 +295,6 @@
     if (el) el.textContent = txt;
   }
 
-  /* ── Overlay bauen ── */
   function buildOverlay() {
     if (document.getElementById('jfrank-ov')) return;
     var ov = document.createElement('div');
@@ -381,7 +351,6 @@
 
     var cache = loadCache();
 
-    /* Sofort aus Cache rendern wenn vorhanden */
     if (cache && cache.users) {
       renderFromCache(cache);
       setStatus('· checking…');
@@ -389,11 +358,9 @@
       setStatus('· loading…');
     }
 
-    /* Aktuelle User-Liste holen — prüfen ob sich was geändert hat */
     jfetch('/Users').then(function(liveUsers) {
       if (!Array.isArray(liveUsers)) liveUsers = [];
 
-      /* Neuer User erkannt → Cache komplett verwerfen und Full-Reload */
       if (usersChanged(cache && cache.users, liveUsers)) {
         console.log('[Ranking] User-Liste geändert → Full-Reload');
         cache = freshCache();
@@ -402,12 +369,8 @@
         return updateRanking(cache);
       }
 
-      /* Nur nachladen wenn letzter Delta > 24h her */
       var needsDelta = !cache.lastDelta || (Date.now() - cache.lastDelta) > DELTA_WINDOW;
-      if (!needsDelta) {
-        setStatus('· up to date');
-        return null;
-      }
+      if (!needsDelta) { setStatus('· up to date'); return null; }
       setStatus('· updating…');
       return updateRanking(cache);
 
@@ -420,7 +383,6 @@
     });
   }
 
-  /* ── Tab patchen — Calendar-Pattern ── */
   function patchTab() {
     var allBtns = document.querySelectorAll('[id^="customTabButton"], .emby-tab-button, [class*="tabButton"]');
     allBtns.forEach(function(btn) {
@@ -442,7 +404,6 @@
     });
   }
 
-  /* ── Boot ── */
   setInterval(function() {
     if (typeof ApiClient === 'undefined') return;
     injectCSS();
