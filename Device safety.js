@@ -398,6 +398,8 @@
     Object.entries(customGroups).forEach(([gid, cg]) => {
       const members = allDevGroups.filter(g=>cg.keys.includes(g.key));
       if (!members.length) { Store.delGroup(gid); return; }
+      // Filter: only show group if at least one member matches
+      if (filter !== 'all' && !members.some(m => m.status === filter)) return;
       const isLiveAny = members.some(m=>m.ids.some(id=>liveSessions.has(id)));
       const gAlias = cg.name;
 
