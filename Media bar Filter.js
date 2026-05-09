@@ -4,9 +4,10 @@
 (function () {
   'use strict';
 
-  var SK_RATING = 'jf_mbrf_minRating';
-  var SK_COUNT  = 'jf_mbrf_count';
-  var SK_TYPE   = 'jf_mbrf_type';
+  var SK_RATING   = 'jf_mbrf_minRating';
+  var SK_COUNT    = 'jf_mbrf_count';
+  var SK_TYPE     = 'jf_mbrf_type';
+  var SK_INTERVAL = 'jf_mbrf_interval';
 
   function getUserId(){ var ac=window.ApiClient; return ac&&(ac._currentUserId||(ac.getCurrentUserId&&ac.getCurrentUserId()))||'default'; }
   function userKey(k){ return k+'_'+getUserId(); }
@@ -14,11 +15,12 @@
   function save(k,v){ try{ localStorage.setItem(userKey(k),JSON.stringify(v)); }catch(e){} }
 
   /* cfg is loaded after login when userId is known */
-  var cfg = { minRating:0, count:20, mediaType:'All' };
+  var cfg = { minRating:0, count:20, mediaType:'All', interval:8 };
   function loadCfg(){
-    cfg.minRating = load(SK_RATING, 0);
-    cfg.count     = load(SK_COUNT,  20);
-    cfg.mediaType = load(SK_TYPE,   'All');
+    cfg.minRating = load(SK_RATING,   0);
+    cfg.count     = load(SK_COUNT,    20);
+    cfg.mediaType = load(SK_TYPE,     'All');
+    cfg.interval  = load(SK_INTERVAL, 8);
   }
 
   /* ── CSS ─────────────────────────────────────────────────────────────────── */
@@ -127,6 +129,10 @@
       <input id="mbrf-cs" class="mbrf-slider" type="range" min="5" max="50" step="1" value="${cfg.count}">
     </div>
     <div>
+      <div class="mbrf-lbl" style="margin-bottom:6px">Slide Interval <b id="mbrf-iv">${cfg.interval}s</b></div>
+      <input id="mbrf-is" class="mbrf-slider" type="range" min="3" max="60" step="1" value="${cfg.interval}">
+    </div>
+    <div>
       <div class="mbrf-lbl" style="margin-bottom:6px">Media Type</div>
       <div class="mbrf-chips">
         <button class="mbrf-chip${cfg.mediaType==='All'?' on':''}"    data-v="All">🎭 All</button>
@@ -148,10 +154,11 @@
     var s=document.getElementById('mbrf-stars'); if(!s) return; s.innerHTML='';
     for(var i=1;i<=10;i++){ var sp=document.createElement('span'); sp.textContent=i<=val?'★':'☆'; sp.style.color=i<=val?'#7c6af7':'rgba(255,255,255,0.2)'; s.appendChild(sp); }
   }
-  var rs=document.getElementById('mbrf-rs'), cs=document.getElementById('mbrf-cs');
-  gradSet(rs); gradSet(cs); renderStars(cfg.minRating);
+  var rs=document.getElementById('mbrf-rs'), cs=document.getElementById('mbrf-cs'), is_=document.getElementById('mbrf-is');
+  gradSet(rs); gradSet(cs); gradSet(is_); renderStars(cfg.minRating);
   rs.addEventListener('input',function(){ document.getElementById('mbrf-rv').textContent=this.value==0?'–':this.value; gradSet(this); renderStars(parseFloat(this.value)); resetPillAutoClose(); });
   cs.addEventListener('input',function(){ document.getElementById('mbrf-cv').textContent=this.value; gradSet(this); resetPillAutoClose(); });
+  is_.addEventListener('input',function(){ document.getElementById('mbrf-iv').textContent=this.value+'s'; gradSet(this); resetPillAutoClose(); });
 
   /* ── Auto-close logic ────────────────────────────────────────────────────── */
   var PILL_TIMEOUT = 10; // seconds
@@ -195,8 +202,9 @@
 
   document.getElementById('mbrf-save').addEventListener('click',function(){
     cfg.minRating=parseFloat(rs.value); cfg.count=parseInt(cs.value);
+    cfg.interval =parseInt(is_.value);
     cfg.mediaType=(pill.querySelector('.mbrf-chip.on')||pill.querySelector('.mbrf-chip')).dataset.v;
-    save(SK_RATING,cfg.minRating); save(SK_COUNT,cfg.count); save(SK_TYPE,cfg.mediaType);
+    save(SK_RATING,cfg.minRating); save(SK_COUNT,cfg.count); save(SK_TYPE,cfg.mediaType); save(SK_INTERVAL,cfg.interval);
     var b=document.getElementById('mbrf-gear-badge');
     b.textContent=cfg.minRating>0?cfg.minRating:'';
     cfg.minRating>0?b.classList.add('show'):b.classList.remove('show');
@@ -400,7 +408,7 @@
     if(timer) clearInterval(timer);
     timer=setInterval(function(){
       showSlide((currentIdx+1)%allSlides.length, bar);
-    }, 8000);
+    }, cfg.interval * 1000);
   }
 
   /* ── Start ───────────────────────────────────────────────────────────────── */
@@ -427,6 +435,8 @@
     document.getElementById('mbrf-rv').textContent = cfg.minRating===0?'–':cfg.minRating;
     cs.value = cfg.count; gradSet(cs);
     document.getElementById('mbrf-cv').textContent = cfg.count;
+    is_.value = cfg.interval; gradSet(is_);
+    document.getElementById('mbrf-iv').textContent = cfg.interval+'s';
     pill.querySelectorAll('.mbrf-chip').forEach(function(c){
       c.classList.toggle('on', c.dataset.v === cfg.mediaType);
     });
