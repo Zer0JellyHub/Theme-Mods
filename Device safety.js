@@ -385,6 +385,7 @@
   // ── State ─────────────────────────────────────────────────────
 
   let allDevGroups = [], liveSessions = new Set(), groupMode = false, myDeviceId = '';
+  let adminUserIds = new Set(); // all admin user IDs — never blocked
 
   // ── Render ────────────────────────────────────────────────────
 
@@ -468,9 +469,10 @@
 
     html += visible.map(g => {
       const isLive  = g.ids.some(id=>liveSessions.has(id));
-      const willBlk = blocking&&(g.status==='rejected'||(g.status==='unknown'&&blkUnk));
+      const effectiveStatus = g.isAdminDevice ? 'approved' : g.status;
+      const willBlk = !g.isAdminDevice && blocking&&(g.status==='rejected'||(g.status==='unknown'&&blkUnk));
       const last    = g.lastSeen ? g.lastSeen.toLocaleString('de-DE') : '—';
-      const btxt    = {unknown:'⚠ Unknown',approved:'✓ Approved',rejected:'✕ Rejected'}[g.status];
+      const btxt    = {unknown:'⚠ Unknown',approved:'✓ Approved',rejected:'✕ Rejected'}[effectiveStatus];
       const alias   = Store.getAlias(g.key);
       const dispName= alias || g.name;
       return `
