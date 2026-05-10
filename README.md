@@ -23,13 +23,14 @@ A personal collection of JavaScript mods, UI tweaks and overlays for a self-host
 ---
 
 ## 📸 Preview 
-Not 100% accurate
+Demo Not 100% accurate
 <p align="center">
   <a href="https://zer0jellyhub.github.io/TheHub/">
     <img src="https://img.shields.io/badge/🎬_Live_Demo-Try_it_interactively-7c6af7?style=for-the-badge" alt="Live Demo"/>
   </a>
 </p>
-<img width="1440" height="786" alt="Bildschirmfoto 2026-05-09 um 18 14 09" src="https://github.com/user-attachments/assets/3b1f40a0-22a2-4ab5-95d3-9304b18e104d" />
+<img width="1440" height="787" alt="Bildschirmfoto 2026-05-10 um 14 05 23" src="https://github.com/user-attachments/assets/dd978e1f-1370-4afc-88ed-753d5b5d16b4" />
+
 <img width="1440" height="784" alt="Bildschirmfoto 2026-05-09 um 18 14 24" src="https://github.com/user-attachments/assets/1f92fb0c-3865-4cca-aedd-f65075b57d89" />
 
 > The interactive demo (`index.html`) mirrors the real HUD layout:
