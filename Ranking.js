@@ -2,7 +2,8 @@
    Jellyfin Ranking Tab — Fullscreen + Smart Cache
    · Vollbild wie Calendar
    · Sofort aus Cache rendern
-   · Nur letzte 24h inkrementell nachladen
+   · Alle 30min inkrementell nachladen (statt 24h)
+   · Item-ID-Deduplizierung verhindert Doppelzählung
    · Serien-Cache: 3 Monate TTL / Film-Cache: 6 Monate TTL
    · Neuer User → automatischer Full-Reload
    · API_KEY für Admin-Zugriff → alle User sehen dasselbe
@@ -10,11 +11,11 @@
 (function () {
   'use strict';
 
-  var CACHE_KEY    = 'jfrank_v2';
+  var CACHE_KEY    = 'jfrank_v3';             // v3 wegen neuer Cache-Struktur (IDs)
   var API_KEY      = '104c958c9fe149cf881d7841e986a5fe';
   var TTL_FILM     = 6  * 30 * 24 * 3600000;
   var TTL_SERIES   = 3  * 30 * 24 * 3600000;
-  var DELTA_WINDOW = 24 * 3600000;
+  var DELTA_WINDOW = 30 * 60000;              // FIX: 30 Minuten statt 24h
 
   var COLORS = ['#7c6af7','#00a4dc','#e8871a','#4caf50','#f44336',
                 '#e91e63','#00bcd4','#ff9800','#9c27b0','#607d8b'];
@@ -122,7 +123,18 @@
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(c)); } catch(e){}
   }
   function freshCache() {
-    return { filmData:{}, seriesData:{}, filmReset:Date.now(), seriesReset:Date.now(), lastDelta:0 };
+    return {
+      filmData:   {},
+      seriesData: {},
+      filmReset:   Date.now(),
+      seriesReset: Date.now(),
+      lastDelta:   0
+    };
+  }
+
+  // FIX: Cache-Eintrag mit IDs-Set für Deduplizierung
+  function freshEntry() {
+    return { count: 0, hours: 0, ids: [] };
   }
 
   function ticksToH(t) { return t / 36000000000; }
@@ -156,12 +168,28 @@
     return jfetch(url).then(function(d){ return d&&d.Items?d.Items:[]; });
   }
 
+  // FIX: Delta-Merge mit ID-Deduplizierung — kein Item wird doppelt gezählt
+  function mergeDelta(entry, items) {
+    if (!entry.ids) entry.ids = [];
+    var idSet = {};
+    entry.ids.forEach(function(id){ idSet[id] = true; });
+
+    items.forEach(function(it) {
+      var id = it.Id;
+      if (!id || idSet[id]) return;   // bereits bekannt → überspringen
+      idSet[id] = true;
+      entry.ids.push(id);
+      entry.count++;
+      entry.hours += ticksToH(it.RunTimeTicks || 0);
+    });
+  }
+
   function updateRanking(forceCache) {
     var cache = forceCache || loadCache() || freshCache();
     var now   = Date.now();
 
-    var filmExpired   = (now - cache.filmReset)  > TTL_FILM;
-    var seriesExpired = (now - cache.seriesReset) > TTL_SERIES;
+    var filmExpired   = (now - cache.filmReset)   > TTL_FILM;
+    var seriesExpired = (now - cache.seriesReset)  > TTL_SERIES;
     if (filmExpired)   { cache.filmData   = {}; cache.filmReset   = now; }
     if (seriesExpired) { cache.seriesData = {}; cache.seriesReset = now; }
 
@@ -177,32 +205,33 @@
 
         var filmP = (isDelta ? fetchDelta(uid2,'Movie',sinceIso) : fetchFull(uid2,'Movie',500))
           .then(function(items) {
-            if (!cache.filmData[uid2]) cache.filmData[uid2] = { count:0, hours:0 };
             if (isDelta) {
-              items.forEach(function(it) {
-                cache.filmData[uid2].count++;
-                cache.filmData[uid2].hours += ticksToH(it.RunTimeTicks||0);
-              });
+              // FIX: Deduplizierung statt blindes Hochzählen
+              if (!cache.filmData[uid2]) cache.filmData[uid2] = freshEntry();
+              mergeDelta(cache.filmData[uid2], items);
             } else {
+              // Full-Reload: sauber neu aufbauen inkl. IDs
+              var ids = items.map(function(it){ return it.Id; }).filter(Boolean);
               cache.filmData[uid2] = {
                 count: items.length,
-                hours: items.reduce(function(s,it){ return s+ticksToH(it.RunTimeTicks||0); },0)
+                hours: items.reduce(function(s,it){ return s+ticksToH(it.RunTimeTicks||0); }, 0),
+                ids:   ids
               };
             }
           }).catch(function(){});
 
         var serP = (isDelta ? fetchDelta(uid2,'Episode',sinceIso) : fetchFull(uid2,'Episode',2000))
           .then(function(items) {
-            if (!cache.seriesData[uid2]) cache.seriesData[uid2] = { count:0, hours:0 };
             if (isDelta) {
-              items.forEach(function(it) {
-                cache.seriesData[uid2].count++;
-                cache.seriesData[uid2].hours += ticksToH(it.RunTimeTicks||0);
-              });
+              // FIX: Deduplizierung statt blindes Hochzählen
+              if (!cache.seriesData[uid2]) cache.seriesData[uid2] = freshEntry();
+              mergeDelta(cache.seriesData[uid2], items);
             } else {
+              var ids = items.map(function(it){ return it.Id; }).filter(Boolean);
               cache.seriesData[uid2] = {
                 count: items.length,
-                hours: items.reduce(function(s,it){ return s+ticksToH(it.RunTimeTicks||0); },0)
+                hours: items.reduce(function(s,it){ return s+ticksToH(it.RunTimeTicks||0); }, 0),
+                ids:   ids
               };
             }
           }).catch(function(){});
@@ -369,6 +398,7 @@
         return updateRanking(cache);
       }
 
+      // FIX: 30min statt 24h — Änderungen anderer User werden zeitnah übernommen
       var needsDelta = !cache.lastDelta || (Date.now() - cache.lastDelta) > DELTA_WINDOW;
       if (!needsDelta) { setStatus('· up to date'); return null; }
       setStatus('· updating…');
