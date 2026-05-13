@@ -12,7 +12,7 @@
 
 <br/>
 
-A personal collection of JavaScript mods, UI tweaks and overlays for a self-hosted Jellyfin server running the **TheHub** theme. Everything injects via the [JavaScript Injector](https://github.com/nicowillis/jellyfin-plugin-javascript-injector) plugin — no server modifications required.
+A personal collection of JavaScript mods, UI tweaks and overlays for a self-hosted Jellyfin server running the **TheHub** theme. Everything injects via the [JavaScript Injector](https://github.com/nicowillis/jellyfin-plugin-javascript-injector) plugin — no server modifications required. Made for smartphone and laptop.
 
 ---
 
