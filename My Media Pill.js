@@ -47,8 +47,12 @@
                 <div class="jf-pill" id="p-mov">${ICONS.movies}<span>Movies</span></div>
             </div>`;
         section.parentNode.insertBefore(outer, section.nextSibling);
-        document.getElementById('p-ser').onclick = () => links[0].click();
-        document.getElementById('p-mov').onclick = () => links[1].click();
+
+        const seriesLink = [...links].find(a => /series|tvshows/i.test(a.href));
+        const moviesLink = [...links].find(a => /movies|films/i.test(a.href));
+
+        document.getElementById('p-ser').onclick = () => seriesLink?.click();
+        document.getElementById('p-mov').onclick = () => moviesLink?.click();
     }
     setInterval(patchMedia, 1000);
     patchMedia();
