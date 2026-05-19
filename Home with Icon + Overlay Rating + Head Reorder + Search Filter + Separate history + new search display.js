@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   var _origFetch = window.fetch;
-  window._origFetch = _origFetch; /* expose for other modules */
+  window._origFetch = _origFetch;
   window.fetch = function (input, init) {
     return _origFetch.apply(this, arguments).then(function (response) {
       var url = (typeof input === 'string' ? input : (input && input.url)) || '';
@@ -152,87 +152,45 @@
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",function(){setTimeout(tryInit,500);});else setTimeout(tryInit,500);
   new MutationObserver(function(){if(!document.getElementById(CONTAINER_ID)&&document.querySelector('.headerRight'))inject();hideNativeSearch();}).observe(document.body||document.documentElement,{childList:true,subtree:true});
 
-  /* ── Fullscreen Search Overlay ── */
   var SEARCH_OV_ID = 'jbi-search-fullscreen';
 
   function openSearchOverlay(query) {
     var existing = document.getElementById(SEARCH_OV_ID);
     if (existing) existing.remove();
 
-    /* CSS einmalig injizieren */
     if (!document.getElementById('jbi-sov-css')) {
       var sc = document.createElement('style');
       sc.id = 'jbi-sov-css';
       sc.textContent = [
-        /* ═══════════════════════════════════════════════════════
-           HAUPT-OVERLAY — Mobile-first, Desktop via min()
-           ═══════════════════════════════════════════════════════ */
-        '#jbi-search-fullscreen{',
-          'position:fixed;',
-          'top:80px;',
-          'left:50%;',
-          'transform:translateX(-50%);',
-          /* Desktop: max 680px; Mobile: volle Breite minus 16px Rand */
-          'width:min(680px,calc(100% - 16px));',
-          'max-height:78vh;',
-          'z-index:99999;',
-          'display:flex;flex-direction:column;overflow:hidden;',
-          'background:#1c1c1c;border-radius:12px;',
-          'box-shadow:0 8px 40px rgba(0,0,0,.8);',
-          'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}',
-
-        /* Auf schmalen Screens: weniger Abstand oben, mehr Höhe */
-        '@media(max-width:720px){',
-          '#jbi-search-fullscreen{',
-            'top:12px;',
-            'max-height:92vh;',
-            'border-radius:10px;',
-          '}',
-        '}',
-
-        '#jbi-sov-head{display:flex;flex-direction:column;',
-          'padding:20px 20px 14px;',
-          'flex-shrink:0;}',
-        '#jbi-sov-input-wrap{width:100%;display:flex;align-items:center;box-sizing:border-box;',
-          'background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);',
-          'border-radius:10px;padding:0 14px;transition:border-color .15s;}',
+        '#jbi-search-fullscreen{position:fixed;top:80px;left:50%;transform:translateX(-50%);width:min(680px,calc(100% - 16px));max-height:78vh;z-index:99999;display:flex;flex-direction:column;overflow:hidden;background:#1c1c1c;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.8);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}',
+        '@media(max-width:720px){#jbi-search-fullscreen{top:12px;max-height:92vh;border-radius:10px;}}',
+        '#jbi-sov-head{display:flex;flex-direction:column;padding:20px 20px 14px;flex-shrink:0;}',
+        '#jbi-sov-input-wrap{width:100%;display:flex;align-items:center;box-sizing:border-box;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:0 14px;transition:border-color .15s;}',
         '#jbi-sov-input-wrap:focus-within{border-color:rgba(0,164,220,.5);}',
         '#jbi-sov-input-wrap svg{width:16px;height:16px;fill:none;stroke:rgba(255,255,255,.4);stroke-width:1.8;stroke-linecap:round;flex-shrink:0;}',
         '#jbi-sov-input{flex:1;background:none;border:none;outline:none;color:#fff;font-size:15px;padding:12px 10px;}',
         '#jbi-sov-input::placeholder{color:rgba(255,255,255,.25);}',
         '#jbi-sov-close:hover{background:rgba(255,255,255,.1)!important;}',
-        '#jbi-sov-meta{padding:6px 20px 4px;font-size:.68em;color:rgba(255,255,255,.28);',
-          'letter-spacing:.08em;text-transform:uppercase;flex-shrink:0;}',
-        '#jbi-sov-body{flex:1;overflow-y:auto;padding:2px 20px 20px;',
-          'scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent;}',
+        '#jbi-sov-meta{padding:6px 20px 4px;font-size:.68em;color:rgba(255,255,255,.28);letter-spacing:.08em;text-transform:uppercase;flex-shrink:0;}',
+        '#jbi-sov-body{flex:1;overflow-y:auto;padding:2px 20px 20px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent;}',
         '#jbi-sov-body::-webkit-scrollbar{width:4px;}',
         '#jbi-sov-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:2px;}',
-        /* Section titles */
         '.jbi-sov-section{margin-top:18px;}',
-        '.jbi-sov-section-title{font-size:.65em;font-weight:600;letter-spacing:.12em;',
-          'text-transform:uppercase;color:rgba(255,255,255,.28);margin-bottom:14px;}',
-        /* Cards grid */
+        '.jbi-sov-section-title{font-size:.65em;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.28);margin-bottom:14px;}',
         '.jbi-sov-grid{display:flex;flex-wrap:wrap;gap:10px;}',
         '.jbi-sov-card{width:90px;cursor:pointer;flex-shrink:0;transition:transform .15s,opacity .15s;}',
         '.jbi-sov-card:hover{transform:scale(1.04);opacity:.9;}',
-        '.jbi-sov-poster{width:90px;height:135px;border-radius:6px;',
-          'background:rgba(255,255,255,.06);overflow:hidden;border:1px solid rgba(255,255,255,.07);}',
+        '.jbi-sov-poster{width:90px;height:135px;border-radius:6px;background:rgba(255,255,255,.06);overflow:hidden;border:1px solid rgba(255,255,255,.07);}',
         '.jbi-sov-poster img{width:100%;height:100%;object-fit:cover;display:block;}',
-        '.jbi-sov-title{font-size:11px;font-weight:500;color:rgba(255,255,255,.88);',
-          'margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+        '.jbi-sov-title{font-size:11px;font-weight:500;color:rgba(255,255,255,.88);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
         '.jbi-sov-year{font-size:9px;color:rgba(255,255,255,.3);margin-top:1px;}',
-        /* Episode row */
-        '.jbi-sov-ep-row{display:flex;align-items:center;gap:12px;padding:8px 0;',
-          'border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;transition:background .12s;}',
+        '.jbi-sov-ep-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;transition:background .12s;}',
         '.jbi-sov-ep-row:hover{background:rgba(255,255,255,.04);}',
-        '.jbi-sov-ep-thumb{width:80px;height:46px;border-radius:5px;flex-shrink:0;',
-          'background:rgba(255,255,255,.07);overflow:hidden;}',
+        '.jbi-sov-ep-thumb{width:80px;height:46px;border-radius:5px;flex-shrink:0;background:rgba(255,255,255,.07);overflow:hidden;}',
         '.jbi-sov-ep-thumb img{width:100%;height:100%;object-fit:cover;display:block;}',
         '.jbi-sov-ep-info{flex:1;min-width:0;}',
-        '.jbi-sov-ep-name{font-size:13px;font-weight:500;color:rgba(255,255,255,.9);',
-          'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+        '.jbi-sov-ep-name{font-size:13px;font-weight:500;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
         '.jbi-sov-ep-meta{font-size:10px;color:rgba(255,255,255,.3);margin-top:3px;}',
-        /* Spinner / hint */
         '.jbi-sov-ep-list-inner{display:flex;flex-direction:column;}',
         '.jbi-sov-spin{padding:60px 0;text-align:center;color:rgba(255,255,255,.25);font-size:.85em;}',
         '.jbi-sov-empty{padding:60px 0;text-align:center;color:rgba(255,255,255,.2);font-size:.85em;line-height:2.4;}',
@@ -240,7 +198,6 @@
       document.head.appendChild(sc);
     }
 
-    /* Backdrop */
     var backdrop = document.createElement('div');
     backdrop.id = 'jbi-sov-backdrop';
     backdrop.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);';
@@ -249,7 +206,6 @@
     var ov = document.createElement('div');
     ov.id = SEARCH_OV_ID;
 
-    /* Header */
     var head = document.createElement('div');
     head.id = 'jbi-sov-head';
     var closeId = 'jbi-sov-close';
@@ -276,7 +232,6 @@
 
     document.body.appendChild(ov);
 
-    /* Close */
     function closeSearchOv() {
       ov.remove();
       var bd = document.getElementById('jbi-sov-backdrop');
@@ -288,7 +243,6 @@
     backdrop.addEventListener('click', closeSearchOv);
     document.addEventListener('keydown', sovEsc);
 
-    /* Live search on input change */
     var sovTimer = null;
     var sovInput = document.getElementById('jbi-sov-input');
     sovInput.focus();
@@ -300,7 +254,6 @@
       sovTimer = setTimeout(function(){ doSearchOv(q, body, meta, closeSearchOv); }, 120);
     });
 
-    /* Initial search — nur wenn query nicht leer */
     if (query && query.trim()) {
       doSearchOv(query, body, meta, closeSearchOv);
     } else {
@@ -342,8 +295,6 @@
     }
 
     var PAGE_SIZE = 30;
-    var currentStartIndex = 0;
-    var allLoadedItems = [];
 
     function fetchPage(startIndex, append) {
       var _rawFetch = window._origFetch || window.fetch;
@@ -359,17 +310,15 @@
         var total = data && data.TotalRecordCount ? data.TotalRecordCount : 0;
 
         if (!append) {
-          allLoadedItems = items;
           body.innerHTML = '';
         } else {
-          allLoadedItems = allLoadedItems.concat(items);
           var old = document.getElementById('jbi-sov-more');
           if (old) old.remove();
         }
 
         meta.textContent = total + ' Ergebnis' + (total!==1?'se':'') + ' für „'+query+'"';
 
-        if (!allLoadedItems.length) {
+        if (!items.length) {
           body.innerHTML = '<div class="jbi-sov-empty">Keine Ergebnisse gefunden.<br>Versuche einen anderen Suchbegriff.</div>';
           return;
         }
@@ -428,15 +377,11 @@
           });
         }
 
-        /* "Show more" Button */
         if (total > 10) {
           var moreBtn = document.createElement('button');
           moreBtn.id = 'jbi-sov-more';
           moreBtn.textContent = 'Show all ' + total + ' results';
-          moreBtn.style.cssText = 'display:block;margin:24px auto 8px;padding:10px 28px;'
-            +'background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);'
-            +'border-radius:8px;color:rgba(255,255,255,.8);font-size:13px;cursor:pointer;'
-            +'transition:all .15s;font-family:inherit;';
+          moreBtn.style.cssText = 'display:block;margin:24px auto 8px;padding:10px 28px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:8px;color:rgba(255,255,255,.8);font-size:13px;cursor:pointer;transition:all .15s;font-family:inherit;';
           moreBtn.onmouseover = function(){ moreBtn.style.background='rgba(255,255,255,.16)';moreBtn.style.color='#fff'; };
           moreBtn.onmouseout  = function(){ moreBtn.style.background='rgba(255,255,255,.08)';moreBtn.style.color='rgba(255,255,255,.8)'; };
           moreBtn.addEventListener('click', function() {
@@ -454,9 +399,6 @@
     fetchPage(0, false);
   }
 
-
-
-  /* ── Vollbild: alle Suchergebnisse ── */
   function openAllResultsOverlay(query, total, serverUrl, userId, token, imgUrl, navToItem) {
     var ovId = 'jbi-all-results-ov';
     var existing = document.getElementById(ovId);
@@ -464,16 +406,10 @@
 
     var ov = document.createElement('div');
     ov.id = ovId;
-    ov.style.cssText = 'position:fixed;inset:0;z-index:100000;'
-      +'background:rgba(0,0,0,.55);backdrop-filter:blur(24px) saturate(1.4);'
-      +'-webkit-backdrop-filter:blur(24px) saturate(1.4);'
-      +'display:flex;flex-direction:column;overflow:hidden;'
-      +'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.55);backdrop-filter:blur(24px) saturate(1.4);-webkit-backdrop-filter:blur(24px) saturate(1.4);display:flex;flex-direction:column;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;';
 
-    /* Header */
     var head = document.createElement('div');
-    head.style.cssText = 'display:flex;align-items:center;gap:12px;padding:14px 3.5%;'
-      +'border-bottom:1px solid rgba(255,255,255,.12);flex-shrink:0;background:rgba(0,0,0,.2);';
+    head.style.cssText = 'display:flex;align-items:center;gap:12px;padding:14px 3.5%;border-bottom:1px solid rgba(255,255,255,.12);flex-shrink:0;background:rgba(0,0,0,.2);';
     var titleEl = document.createElement('div');
     titleEl.style.cssText = 'flex:1;font-size:1.1em;font-weight:300;color:rgba(255,255,255,.95);';
     titleEl.textContent = 'All results for „'+query+'"';
@@ -483,15 +419,12 @@
     titleEl.appendChild(countEl);
     var closeBtn2 = document.createElement('button');
     closeBtn2.textContent = '✕';
-    closeBtn2.style.cssText = 'background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);'
-      +'color:rgba(255,255,255,.85);border-radius:50%;width:34px;height:34px;cursor:pointer;'
-      +'display:flex;align-items:center;justify-content:center;font-size:1em;flex-shrink:0;';
+    closeBtn2.style.cssText = 'background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.85);border-radius:50%;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1em;flex-shrink:0;';
     closeBtn2.onclick = function(){ ov.remove(); document.removeEventListener('keydown',escAll); };
     head.appendChild(titleEl);
     head.appendChild(closeBtn2);
     ov.appendChild(head);
 
-    /* Filter row */
     var filterRow = document.createElement('div');
     filterRow.style.cssText = 'display:flex;gap:8px;padding:10px 3.5%;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.06);';
     var activeFilter = 'all';
@@ -499,10 +432,7 @@
     ['all','Movie','Series','Episode'].forEach(function(f){
       var fb = document.createElement('button');
       fb.textContent = f==='all'?'All':f==='Movie'?'Movies':f==='Series'?'Series':'Episodes';
-      fb.style.cssText = 'padding:4px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.18);'
-        +'background:'+(f==='all'?'rgba(255,255,255,.18)':'rgba(255,255,255,.06)')+';'
-        +'color:'+(f==='all'?'#fff':'rgba(255,255,255,.5)')+';'
-        +'font-size:11px;cursor:pointer;transition:all .15s;font-family:inherit;';
+      fb.style.cssText = 'padding:4px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:'+(f==='all'?'rgba(255,255,255,.18)':'rgba(255,255,255,.06)')+';color:'+(f==='all'?'#fff':'rgba(255,255,255,.5)')+';font-size:11px;cursor:pointer;transition:all .15s;font-family:inherit;';
       fb.addEventListener('click', function(){
         activeFilter = f;
         Object.keys(filterBtns).forEach(function(k){
@@ -516,16 +446,13 @@
     });
     ov.appendChild(filterRow);
 
-    /* Grid container */
     var gridWrap = document.createElement('div');
-    gridWrap.style.cssText = 'flex:1;overflow-y:auto;padding:20px 3.5% 40px;'
-      +'scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent;';
+    gridWrap.style.cssText = 'flex:1;overflow-y:auto;padding:20px 3.5% 40px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent;';
     var grid = document.createElement('div');
     grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:14px;';
     gridWrap.appendChild(grid);
     ov.appendChild(gridWrap);
 
-    /* Loading bar */
     var loadBar = document.createElement('div');
     loadBar.style.cssText = 'padding:16px 3.5%;text-align:center;color:rgba(255,255,255,.3);font-size:.8em;flex-shrink:0;';
     loadBar.textContent = 'Loading…';
@@ -535,7 +462,6 @@
     var escAll = function(e){ if(e.key==='Escape'){ ov.remove(); document.removeEventListener('keydown',escAll); } };
     document.addEventListener('keydown', escAll);
 
-    /* Load ALL pages */
     var allItems = [];
     var PAGE = 60;
 
@@ -564,10 +490,7 @@
 
     function renderGrid() {
       grid.innerHTML = '';
-      var filtered = activeFilter === 'all'
-        ? allItems
-        : allItems.filter(function(i){ return i.Type === activeFilter; });
-
+      var filtered = activeFilter === 'all' ? allItems : allItems.filter(function(i){ return i.Type === activeFilter; });
       filtered.forEach(function(item){
         var card = document.createElement('div');
         card.style.cssText = 'width:130px;cursor:pointer;flex-shrink:0;transition:transform .15s,opacity .15s;';
@@ -580,16 +503,13 @@
         });
         var url = imgUrl(item);
         card.innerHTML =
-          '<div style="width:130px;height:195px;border-radius:8px;background:rgba(255,255,255,.06);'
-            +'overflow:hidden;border:1px solid rgba(255,255,255,.07);">'
+          '<div style="width:130px;height:195px;border-radius:8px;background:rgba(255,255,255,.06);overflow:hidden;border:1px solid rgba(255,255,255,.07);">'
             +(url?'<img src="'+url+'" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display=\'none\'">':"")
           +'</div>'
-          +'<div style="font-size:12px;font-weight:500;color:rgba(255,255,255,.88);margin-top:7px;'
-            +'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+item.Name+'</div>'
+          +'<div style="font-size:12px;font-weight:500;color:rgba(255,255,255,.88);margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+item.Name+'</div>'
           +'<div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:2px;">'+(item.ProductionYear||item.Type||'')+'</div>';
         grid.appendChild(card);
       });
-
       if (!filtered.length && allItems.length > 0) {
         grid.innerHTML = '<div style="padding:60px 0;color:rgba(255,255,255,.2);font-size:.85em;text-align:center;">No results in this category.</div>';
       }
@@ -609,8 +529,7 @@
 
   var PILL_BASE = ['display:none','position:fixed','background:rgba(22,23,34,0.97)','border:1px solid rgba(255,255,255,0.16)','border-radius:999px','padding:4px 6px','flex-direction:row','align-items:center','justify-content:center','gap:0','z-index:9999999','box-shadow:0 8px 28px rgba(0,0,0,0.65)','white-space:nowrap','min-width:max-content','box-sizing:border-box'].join(';')+';';
 
-  /* ── Gemeinsamer Popup-State für gegenseitiges Schließen ── */
-  var activePopup = null; // 'wuerfel' | 'tri' | null
+  var activePopup = null;
 
   function closeWuerfelPopup() {
     var p = document.getElementById('jf-wuerfel-popup');
@@ -671,11 +590,127 @@
     function fetchRandom(types){var cfg=loadSettings();var ac=window.ApiClient;if(!ac)return;var userId=ac._currentUserId||(ac.getCurrentUserId&&ac.getCurrentUserId());var token=ac._token||(ac.accessToken&&ac.accessToken());if(!userId||!token)return;var url='/Items?SortBy=Random&Limit=1&Recursive=true&IncludeItemTypes='+types+'&UserId='+userId;if(cfg.minRating&&cfg.minRating>0)url+='&MinCommunityRating='+cfg.minRating;if(cfg.genres&&cfg.genres.length>0)url+='&Genres='+encodeURIComponent(cfg.genres.join('|'));fetch(url,{headers:{'X-Emby-Token':token}}).then(function(r){return r.json();}).then(function(d){var item=d.Items&&d.Items[0];if(item)window.location.href='/web/#/details?id='+item.Id;});}
     function makeDiceBtn(letter,tooltip,types){var b=document.createElement('button');b.title=tooltip;b.style.cssText='display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;background:none;border:none;outline:none;cursor:pointer;border-radius:50%;transition:background 0.15s;padding:0;flex-shrink:0;';b.innerHTML='<svg width="26" height="26" viewBox="0 0 26 26" fill="none"><rect x="2" y="2" width="22" height="22" rx="4" stroke="rgba(255,255,255,0.87)" stroke-width="1.8"/><text x="13" y="17.5" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="12" font-weight="700" fill="rgba(255,255,255,0.87)">'+letter+'</text></svg>';b.onmouseover=function(){b.style.background='rgba(255,255,255,0.1)';};b.onmouseout=function(){b.style.background='none';};b.addEventListener('click',function(e){e.stopPropagation();closeAll();fetchRandom(types);});return b;}
     var settingsModal=null;
-    function openSettings(){if(settingsModal){settingsModal.style.display='flex';loadGenres();return;}var cfg=loadSettings();settingsModal=document.createElement('div');settingsModal.style.cssText='display:flex;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:9999999;align-items:center;justify-content:center;box-sizing:border-box;';var box=document.createElement('div');box.style.cssText='background:#1e1e2e;border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:24px 28px;width:92%;max-width:420px;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 12px 48px rgba(0,0,0,0.8);position:relative;max-height:80vh;overflow-y:auto;';box.innerHTML='<button id="jf-cfg-close" style="position:absolute;top:10px;right:14px;background:none;border:none;color:rgba(255,255,255,0.5);font-size:20px;cursor:pointer;padding:4px 8px;border-radius:4px;">\xd7</button><h3 style="margin:0 0 18px;font-size:17px;font-weight:600;">⚙ Zufalls-Einstellungen</h3><label style="display:block;margin-bottom:6px;font-size:13px;color:rgba(255,255,255,0.7);">Mindestbewertung: <span id="jf-cfg-rating-val">'+(cfg.minRating||1)+'</span> ★</label><input id="jf-cfg-rating" type="range" min="1" max="10" step="0.5" value="'+(cfg.minRating||1)+'" style="width:100%;accent-color:#7c6af7;margin-bottom:20px;"><div style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:8px;">Genres <span style="font-size:11px;opacity:0.5;">(leer = alle)</span></div><div id="jf-cfg-genres" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;min-height:32px;"><span style="opacity:0.4;font-size:12px;">Laden…</span></div><button id="jf-cfg-save" style="width:100%;padding:10px;background:#7c6af7;border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">Speichern</button>';settingsModal.appendChild(box);document.body.appendChild(settingsModal);var slider=document.getElementById('jf-cfg-rating');var ratingVal=document.getElementById('jf-cfg-rating-val');slider.addEventListener('input',function(){ratingVal.textContent=this.value;});document.getElementById('jf-cfg-save').addEventListener('click',function(){var selected=[];box.querySelectorAll('.jf-genre-chip.active').forEach(function(c){selected.push(c.dataset.genre);});saveSettings({minRating:parseFloat(slider.value),genres:selected});settingsModal.style.display='none';});document.getElementById('jf-cfg-close').addEventListener('click',function(){settingsModal.style.display='none';});settingsModal.addEventListener('click',function(e){if(e.target===settingsModal)settingsModal.style.display='none';});loadGenres();}
-    function loadGenres(){var ac=window.ApiClient;if(!ac)return;var userId=ac._currentUserId||(ac.getCurrentUserId&&ac.getCurrentUserId());var token=ac._token||(ac.accessToken&&ac.accessToken());var container=document.getElementById('jf-cfg-genres');if(!container||container.querySelector('.jf-genre-chip'))return;var cfg=loadSettings();fetch('/Genres?UserId='+userId+'&SortBy=SortName&Recursive=true&IncludeItemTypes=Movie,Series',{headers:{'X-Emby-Token':token}}).then(function(r){return r.json();}).then(function(d){container.innerHTML='';(d.Items||[]).forEach(function(g){var isActive=cfg.genres&&cfg.genres.indexOf(g.Name)>-1;var chip=document.createElement('button');chip.className='jf-genre-chip'+(isActive?' active':'');chip.dataset.genre=g.Name;chip.textContent=g.Name;chip.style.cssText='padding:4px 10px;border-radius:999px;border:1px solid '+(isActive?'#7c6af7':'rgba(255,255,255,0.25)')+';background:'+(isActive?'#7c6af7':'transparent')+';color:#fff;font-size:12px;cursor:pointer;transition:all 0.15s;';chip.addEventListener('click',function(e){e.stopPropagation();chip.classList.toggle('active');chip.style.background=chip.classList.contains('active')?'#7c6af7':'transparent';chip.style.borderColor=chip.classList.contains('active')?'#7c6af7':'rgba(255,255,255,0.25)';});container.appendChild(chip);});});}
-    var gearBtn=document.createElement('button');gearBtn.title='Einstellungen';gearBtn.style.cssText='display:inline-flex;align-items:center;justify-content:center;width:36px;height:40px;background:none;border:none;outline:none;cursor:pointer;border-radius:50%;color:rgba(255,255,255,0.5);transition:color 0.15s;padding:0;flex-shrink:0;';gearBtn.innerHTML='<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.02 7.02 0 00-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87a.49.49 0 00.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.37 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 00-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>';gearBtn.onmouseover=function(){gearBtn.style.color='rgba(255,255,255,0.9)';};gearBtn.onmouseout=function(){gearBtn.style.color='rgba(255,255,255,0.5)';};gearBtn.addEventListener('click',function(e){e.stopPropagation();closeAll();openSettings();});
-    popup.appendChild(makeDiceBtn('S','Zufällige Serie','Series'));
-    popup.appendChild(makeDiceBtn('M','Zufälliger Film','Movie'));
+
+    /* ── SETTINGS MODAL (FIXED: Whitelist + MinItemCount) ── */
+    function openSettings(){
+      if(settingsModal){settingsModal.style.display='flex';loadGenres();return;}
+      var cfg=loadSettings();
+      settingsModal=document.createElement('div');
+      settingsModal.style.cssText='display:flex;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:9999999;align-items:center;justify-content:center;box-sizing:border-box;';
+      var box=document.createElement('div');
+      box.style.cssText='background:#1e1e2e;border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:24px 28px;width:92%;max-width:420px;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 12px 48px rgba(0,0,0,0.8);position:relative;max-height:80vh;overflow-y:auto;';
+      box.innerHTML='<button id="jf-cfg-close" style="position:absolute;top:10px;right:14px;background:none;border:none;color:rgba(255,255,255,0.5);font-size:20px;cursor:pointer;padding:4px 8px;border-radius:4px;">\xd7</button>'
+        +'<h3 style="margin:0 0 18px;font-size:17px;font-weight:600;">⚙ Random Settings</h3>'
+        +'<label style="display:block;margin-bottom:6px;font-size:13px;color:rgba(255,255,255,0.7);">Min. rating: <span id="jf-cfg-rating-val">'+(cfg.minRating||1)+'</span> ★</label>'
+        +'<input id="jf-cfg-rating" type="range" min="1" max="10" step="0.5" value="'+(cfg.minRating||1)+'" style="width:100%;accent-color:#7c6af7;margin-bottom:20px;">'
+        +'<div style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:8px;">Genres <span style="font-size:11px;opacity:0.5;">(empty = all)</span></div>'
+        +'<div id="jf-cfg-genres" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;min-height:32px;"><span style="opacity:0.4;font-size:12px;">Loading…</span></div>'
+        +'<button id="jf-cfg-save" style="width:100%;padding:10px;background:#7c6af7;border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">Save</button>';
+      settingsModal.appendChild(box);
+      document.body.appendChild(settingsModal);
+      var slider=document.getElementById('jf-cfg-rating');
+      var ratingVal=document.getElementById('jf-cfg-rating-val');
+      slider.addEventListener('input',function(){ratingVal.textContent=this.value;});
+      document.getElementById('jf-cfg-save').addEventListener('click',function(){
+        var selected=[];
+        box.querySelectorAll('.jf-genre-chip.active').forEach(function(c){selected.push(c.dataset.genre);});
+        saveSettings({minRating:parseFloat(slider.value),genres:selected});
+        settingsModal.style.display='none';
+      });
+      document.getElementById('jf-cfg-close').addEventListener('click',function(){settingsModal.style.display='none';});
+      settingsModal.addEventListener('click',function(e){if(e.target===settingsModal)settingsModal.style.display='none';});
+      loadGenres();
+    }
+
+    /* ── LOAD GENRES (FIXED: whitelist + DE→EN display labels) ── */
+    function loadGenres(){
+      var ac=window.ApiClient;if(!ac)return;
+      var userId=ac._currentUserId||(ac.getCurrentUserId&&ac.getCurrentUserId());
+      var token=ac._token||(ac.accessToken&&ac.accessToken());
+      var container=document.getElementById('jf-cfg-genres');
+      if(!container||container.querySelector('.jf-genre-chip'))return;
+      var cfg=loadSettings();
+
+      /* Whitelist: all accepted internal names (EN + DE) */
+      var REAL_GENRES=new Set([
+        'Action','Adventure','Animation','Anime','Biography','Comedy','Crime',
+        'Documentary','Drama','Family','Fantasy','History','Horror','Kids',
+        'Music','Musical','Mystery','News','Reality','Romance',
+        'Science Fiction','Sci-Fi','Short','Sport','Sports','Superhero',
+        'Suspense','Thriller','War','Western',
+        'Abenteuer','Animationsfilm','Biografie','Dokumentarfilm','Dokumentation',
+        'Familie','Geschichte','Komödie','Krimi','Kriegsfilm','Liebesfilm',
+        'Romanze','Science-Fiction','Zeichentrick','Realityshow','Kurzfilm'
+      ]);
+
+      /* DE → EN display translation (API value stays German) */
+      var DE_TO_EN={
+        'Abenteuer':'Adventure',
+        'Animationsfilm':'Animation',
+        'Biografie':'Biography',
+        'Dokumentarfilm':'Documentary',
+        'Dokumentation':'Documentary',
+        'Familie':'Family',
+        'Geschichte':'History',
+        'Komödie':'Comedy',
+        'Krimi':'Crime',
+        'Kriegsfilm':'War',
+        'Liebesfilm':'Romance',
+        'Romanze':'Romance',
+        'Science-Fiction':'Science Fiction',
+        'Zeichentrick':'Animation',
+        'Realityshow':'Reality',
+        'Kurzfilm':'Short'
+      };
+
+      fetch(
+        '/Genres?UserId='+userId+'&SortBy=SortName&Recursive=true&IncludeItemTypes=Movie,Series&MinItemCount=3',
+        {headers:{'X-Emby-Token':token}}
+      ).then(function(r){return r.json();}).then(function(d){
+        container.innerHTML='';
+        var all=d.Items||[];
+        /* Filter to whitelist; fallback to all if nothing matches */
+        var filtered=all.filter(function(g){return REAL_GENRES.has(g.Name);});
+        if(!filtered.length) filtered=all;
+
+        /* Deduplicate by display label (e.g. Dokumentation + Dokumentarfilm → one "Documentary" chip) */
+        var seen={};
+        filtered=filtered.filter(function(g){
+          var label=DE_TO_EN[g.Name]||g.Name;
+          if(seen[label])return false;
+          seen[label]=true;
+          return true;
+        });
+
+        /* Sort by English display label */
+        filtered.sort(function(a,b){
+          var la=DE_TO_EN[a.Name]||a.Name;
+          var lb=DE_TO_EN[b.Name]||b.Name;
+          return la.localeCompare(lb);
+        });
+
+        filtered.forEach(function(g){
+          var label=DE_TO_EN[g.Name]||g.Name; /* show English, store original */
+          var isActive=cfg.genres&&cfg.genres.indexOf(g.Name)>-1;
+          var chip=document.createElement('button');
+          chip.className='jf-genre-chip'+(isActive?' active':'');
+          chip.dataset.genre=g.Name; /* original name for API filter */
+          chip.textContent=label;
+          chip.style.cssText='padding:4px 10px;border-radius:999px;border:1px solid '+(isActive?'#7c6af7':'rgba(255,255,255,0.25)')+';background:'+(isActive?'#7c6af7':'transparent')+';color:#fff;font-size:12px;cursor:pointer;transition:all 0.15s;';
+          chip.addEventListener('click',function(e){
+            e.stopPropagation();
+            chip.classList.toggle('active');
+            chip.style.background=chip.classList.contains('active')?'#7c6af7':'transparent';
+            chip.style.borderColor=chip.classList.contains('active')?'#7c6af7':'rgba(255,255,255,0.25)';
+          });
+          container.appendChild(chip);
+        });
+      });
+    }
+
+    var gearBtn=document.createElement('button');gearBtn.title='Settings';gearBtn.style.cssText='display:inline-flex;align-items:center;justify-content:center;width:36px;height:40px;background:none;border:none;outline:none;cursor:pointer;border-radius:50%;color:rgba(255,255,255,0.5);transition:color 0.15s;padding:0;flex-shrink:0;';gearBtn.innerHTML='<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.02 7.02 0 00-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87a.49.49 0 00.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.37 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 00-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>';gearBtn.onmouseover=function(){gearBtn.style.color='rgba(255,255,255,0.9)';};gearBtn.onmouseout=function(){gearBtn.style.color='rgba(255,255,255,0.5)';};gearBtn.addEventListener('click',function(e){e.stopPropagation();closeAll();openSettings();});
+    popup.appendChild(makeDiceBtn('S','Random series','Series'));
+    popup.appendChild(makeDiceBtn('M','Random movie','Movie'));
     popup.appendChild(gearBtn);
 
     var _wuerfelTimer=null;
@@ -932,7 +967,7 @@
     buildTriangle(hr);
     var triWrap=document.querySelector('#jf-tri-wrap');
     [ping,rand,jbi,triWrap,avatar].forEach(function(el){if(el)hr.appendChild(el);});
-    console.log('[JF-Header] ✓ Fertig');
+    console.log('[JF-Header] ✓ Ready');
     return true;
   }
 
